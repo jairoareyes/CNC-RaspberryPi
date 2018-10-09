@@ -5,6 +5,7 @@ GPIO.setmode(GPIO.BCM) #Se pone para que la numeracion de pines sea la del diagr
 ## hardware
 #led = LED(14)
 
+
 StpX = 16
 StpY = 20
 StpZ = 21
@@ -21,34 +22,34 @@ GPIO.setup(StpX, GPIO.OUT)
 GPIO.setup(StpY, GPIO.OUT) 
 GPIO.setup(StpZ, GPIO.OUT)
 
-def dirXPos():
+def dirXPos(valMM):
         GPIO.output(DirX,1)
-        print("X Positivo")
+        print("X Positivo"+valMM)
         PasosX()
 
-def dirXNeg():
+def dirXNeg(valMM):
         GPIO.output(DirX,0)
-        print("X Negativo")
+        print("X Negativo"+valMM)
         PasosX()
 
-def dirYPos():
+def dirYPos(valMM):
         GPIO.output(DirY,1)
-        print("Y Positivo")
+        print("Y Positivo"+valMM)
         PasosY()
 
-def dirYNeg():
+def dirYNeg(valMM):
         GPIO.output(DirY,0)
-        print("Y Negativo")
+        print("Y Negativo"+valMM)
         PasosY()
 
-def dirZPos():
+def dirZPos(valMM):
         GPIO.output(DirZ,1)
-        print("Z Positivo")
+        print("Z Positivo"+valMM)
         PasosZ()
 
-def dirZNeg():
+def dirZNeg(valMM):
         GPIO.output(DirZ,0)
-        print("Z Negativo")
+        print("Z Negativo"+valMM)
         PasosZ()
 
 
