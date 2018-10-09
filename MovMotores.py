@@ -25,51 +25,57 @@ GPIO.setup(StpZ, GPIO.OUT)
 def dirXPos(valMM):
         GPIO.output(DirX,1)
         print("X Positivo"+valMM)
-        PasosX()
+        PasosX(valMM)
 
 def dirXNeg(valMM):
         GPIO.output(DirX,0)
         print("X Negativo"+valMM)
-        PasosX()
+        PasosX(valMM)
 
 def dirYPos(valMM):
         GPIO.output(DirY,1)
         print("Y Positivo"+valMM)
-        PasosY()
+        PasosY(valMM)
 
 def dirYNeg(valMM):
         GPIO.output(DirY,0)
         print("Y Negativo"+valMM)
-        PasosY()
+        PasosY(valMM)
 
 def dirZPos(valMM):
         GPIO.output(DirZ,1)
         print("Z Positivo"+valMM)
-        PasosZ()
+        PasosZ(valMM)
 
 def dirZNeg(valMM):
         GPIO.output(DirZ,0)
         print("Z Negativo"+valMM)
-        PasosZ()
+        PasosZ(valMM)
 
 
 
-def PasosX():
-        for i in range (100):
+def PasosX(val):
+        valNum=float(val)
+        valNum=valNum*50
+        for i in range (int(valNum)):
                 GPIO.output(StpX,1)
                 time.sleep(0.001)
                 GPIO.output(StpX,0)
                 time.sleep(0.001)
         
-def PasosY():
-        for i in range (100):
+def PasosY(val):
+        valNum=float(val)
+        valNum=valNum*50
+        for i in range (int(valNum)):
                 GPIO.output(StpY,1)
                 time.sleep(0.001)
                 GPIO.output(StpY,0)
                 time.sleep(0.001)
         
-def PasosZ():
-        for i in range (100):
+def PasosZ(val):
+        valNum=float(val)
+        valNum=valNum*50
+        for i in range (int(valNum)):
                 GPIO.output(StpZ,1)
                 time.sleep(0.001)
                 GPIO.output(StpZ,0)
