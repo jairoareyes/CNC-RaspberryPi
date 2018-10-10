@@ -1,11 +1,13 @@
 from tkinter import *
 import tkinter.font
 from MovMotores import *
+from tkinter.filedialog import askopenfilename
+from tkinter.messagebox import showerror
 
 
 ## GUI DEFINITIONS
 win = Tk()
-win.geometry("500x700+0+0")
+win.geometry("500x700+400+0")
 win.title("CNC Controller")
 myFont = tkinter.font.Font(family = 'Arial', size = 12)
 fuente2 = tkinter.font.Font(family = 'Times New Roman', size = 11)
@@ -27,6 +29,9 @@ lfCargarArchivo.place(x=10,y=220, width=480, height=200)
 #Labels
 lbAvanzar = Label(win, text="Avanzar (mm)", font=fuente2)
 lbAvanzar.place(x=30,y=30)
+
+lbGCode = Label(win, text="GCode", font=fuente2)
+lbGCode.place(x=30,y=300)
 
 #Spinbox
 sbAvMM = Spinbox(win, from_=0, to=50,format='%.1f',increment=0.1 , textvariable=numPasos, font =fuente2)
@@ -59,6 +64,23 @@ def dirZNeg1():
 def ResetCero():
     print("Reset Cero")
 
+
+def CargarArchivo():
+    NombreArchivo = askopenfilename(filetypes=(("Txt","*.txt"),("NC Files","*.nc"),("all files","*.*")))
+    if NombreArchivo:
+        try:
+            #print(fname)
+            Archivo = open (NombreArchivo,'r')
+            GCode = Archivo.read()
+            #print(GCode)
+            Archivo.close()
+            lbGCode.config(text=GCode)
+        except: 
+            showerror("Open Source File", "Failed to read file")
+        return
+
+
+
 ## Botones ##
 
 # Eje X
@@ -87,7 +109,7 @@ btnRstCero = Button(win, text = 'Reset Cero', font = fuente2, command = ResetCer
 btnRstCero.place(x=220,y=150)
 
 #Cargar Archivo
-btnRstCero = Button(win, text = 'Reset Cero', font = fuente2, command = ResetCero ,height = 1, width = 6)
-btnRstCero.place(x=220,y=150)
+btnCargarArchivo = Button(win, text = 'Cargar Archivo', font = fuente2, command = CargarArchivo,height = 1, width = 10)
+btnCargarArchivo.place(x=30,y=250)
 
 
