@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from tkinter import *
 import tkinter.font
 from MovMotores import *
@@ -114,6 +116,6 @@ btnCargarArchivo.place(x=30,y=250)
 
 ## Imagen ##
 
-imagenpru = PhotoImage(file="imagenPru3.gif")
-lbIma = Label(win, image=imagenpru)
-lbIma.place(x=10,y=300)
+##imagenpru = PhotoImage(file="imagenPru3.gif")
+##lbIma = Label(win, image=imagenpru)
+##lbIma.place(x=10,y=300)
