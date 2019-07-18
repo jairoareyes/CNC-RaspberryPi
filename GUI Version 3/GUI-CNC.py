@@ -1,6 +1,6 @@
 from tkinter import *
 import tkinter.font
-from MovMotores import *
+from MovMotSerial import *
 from tkinter.filedialog import askopenfilename
 from tkinter.messagebox import showerror
 import time
@@ -16,10 +16,14 @@ win.geometry("500x700+400+0")
 win.title("CNC Controller")
 myFont = tkinter.font.Font(family = 'Arial', size = 12)
 fuente2 = tkinter.font.Font(family = 'Times New Roman', size = 11)
+#~ scrollbar=Scrollbar(win)
+#~ scrollbar.pack(side=RIGHT, fill=Y)
 
 #Valirables
 numPasos= StringVar(win)
-
+GCode = StringVar(win)
+nLine = IntVar(win)
+nLine=0
 
 ## LabelFrames ##
 
@@ -29,17 +33,24 @@ lfCalibracion.place(x=10,y=10, width=480, height=200)
 
 #Cargar Archivo
 lfCargarArchivo = LabelFrame(win, text="Cargar Archivo",bd=4,font=fuente2)
-lfCargarArchivo.place(x=10,y=220, width=480, height=200)
+lfCargarArchivo.place(x=10,y=220, width=480, height=400)
 
 #Labels
 lbAvanzar = Label(win, text="Avanzar (mm)", font=fuente2)
 lbAvanzar.place(x=30,y=30)
 
-lbGCode = Label(win, text="GCode", font=fuente2)
-lbGCode.place(x=30,y=300)
+#ListBox
+listbox = Listbox(win)
+listbox.pack()
+
+#Scrollbar
+vscroll = Scrollbar(listbox, orient=VERTICAL, command=listbox.yview)
+listbox['yscroll'] = vscroll.set
+
+vscroll.pack(side="right", fill="y")
 
 #Spinbox
-sbAvMM = Spinbox(win, from_=0, to=50,format='%.1f',increment=0.1 , textvariable=numPasos, font =fuente2)
+sbAvMM = Spinbox(win, from_=0.1, to=50,format='%.1f',increment=0.1 , textvariable=numPasos, font =fuente2)
 sbAvMM.place(x=130, y=30,width=50)
 
 def dirXPos1():
@@ -71,18 +82,34 @@ def ResetCero():
 
 
 def CargarArchivo():
-    NombreArchivo = askopenfilename(filetypes=(("Txt","*.txt"),("NC Files","*.nc"),("all files","*.*")))
+    NombreArchivo = askopenfilename(filetypes=(("all files","*.*"),("NC Files","*.nc"),("Txt","*.txt")))
     if NombreArchivo:
         try:
-            #print(fname)
+            global GCode
+            listbox.place(x=30, y=300, width=440, height=300)
             Archivo = open (NombreArchivo,'r')
             GCode = Archivo.read()
-            #print(GCode)
             Archivo.close()
-            lbGCode.config(text=GCode)
+            time.sleep(0.1);
+            Archivo = open (NombreArchivo,'r')
+            for line in Archivo:
+                listbox.insert(END, line)
+            Archivo.close()
+            btnEnviarArchivo['state'] = 'normal'
         except: 
             showerror("Open Source File", "Failed to read file")
         return
+
+def EnviarArchivo():
+    global GCode
+    global nLine
+    print("Enviar Archivo")
+    linea=GCode.splitlines() #Convierte el String en Array
+    for line in linea:
+        print(linea[nLine])
+        enviarGCode(linea[nLine])
+        nLine=nLine+1
+        time.sleep(0.5)
 
 # def CameraOn():
 #     global camera
@@ -129,18 +156,9 @@ btnRstCero.place(x=220,y=150)
 btnCargarArchivo = Button(win, text = 'Cargar Archivo', font = fuente2, command = CargarArchivo,height = 1, width = 10)
 btnCargarArchivo.place(x=30,y=250)
 
-## Abrir Camara ##
-# btnAbrirCam = Button(win, text = 'Abrir Cam', font = fuente2, command = CameraOn,height = 1, width = 10)
-# btnAbrirCam.place(x=30,y=300)
+#Enviar Archivo
+btnEnviarArchivo = Button(win, text = 'Enviar Archivo', font = fuente2, command = EnviarArchivo,height = 1, width = 10, state='disable')
+btnEnviarArchivo.place(x=350,y=250)
 
-# ## Cerrar Camara ##
-# btnCerrarCam = Button(win, text = 'Cerrar Cam', font = fuente2, command = CameraOff,height = 1, width = 10)
-# btnCerrarCam.place(x=30,y=320)
-
-# ## Tomar Foto ##
-# btnTomarFoto = Button(win, text = 'Tomar Foto', font = fuente2, command = TakePhoto,height = 1, width = 10)
-# btnTomarFoto.place(x=30,y=340)
-##imagenpru = PhotoImage(file="imagenPru3.gif")
-##lbIma = Label(win, image=imagenpru)
-##lbIma.place(x=10,y=300)
+win.mainloop()
 
