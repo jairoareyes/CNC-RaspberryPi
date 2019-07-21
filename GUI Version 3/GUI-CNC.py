@@ -3,16 +3,16 @@ import tkinter.font
 from MovMotSerial import *
 from tkinter.filedialog import askopenfilename
 from tkinter.messagebox import showerror
+import cv2
+import numpy as np
 import time
 import os, sys
-
-# import picamera
-
-# camera = picamera.PiCamera()
+import sched, time
+import threading
 
 ## GUI DEFINITIONS
 win = Tk()
-win.geometry("500x700+400+0")
+win.geometry("500x700+50+0")
 win.title("CNC Controller")
 myFont = tkinter.font.Font(family = 'Arial', size = 12)
 fuente2 = tkinter.font.Font(family = 'Times New Roman', size = 11)
@@ -24,6 +24,8 @@ numPasos= StringVar(win)
 GCode = StringVar(win)
 nLine = IntVar(win)
 nLine=0
+isCameraOn=False
+isThreadOn=False
 
 ## LabelFrames ##
 
@@ -42,17 +44,26 @@ lbAvanzar.place(x=30,y=30)
 #ListBox
 listbox = Listbox(win)
 listbox.pack()
-
+listbox.place(x=30, y=300, width=440, height=300)
 #Scrollbar
 vscroll = Scrollbar(listbox, orient=VERTICAL, command=listbox.yview)
-listbox['yscroll'] = vscroll.set
 
+listbox['yscroll'] = vscroll.set
 vscroll.pack(side="right", fill="y")
+
+varListbox = 0
+#Llena el listBox con 10 espacios en blanco
+while varListbox<10:
+    listbox.insert(END, "")
+    varListbox=varListbox+1
 
 #Spinbox
 sbAvMM = Spinbox(win, from_=0.1, to=50,format='%.1f',increment=0.1 , textvariable=numPasos, font =fuente2)
 sbAvMM.place(x=130, y=30,width=50)
 
+#Define la captura de la camara
+cap=cv2.VideoCapture(0)
+cap2 =""
 def dirXPos1():
     global numPasos
     dirXPos(numPasos.get())
@@ -82,11 +93,11 @@ def ResetCero():
 
 
 def CargarArchivo():
+    listbox.delete(0, END)
     NombreArchivo = askopenfilename(filetypes=(("all files","*.*"),("NC Files","*.nc"),("Txt","*.txt")))
     if NombreArchivo:
         try:
             global GCode
-            listbox.place(x=30, y=300, width=440, height=300)
             Archivo = open (NombreArchivo,'r')
             GCode = Archivo.read()
             Archivo.close()
@@ -110,21 +121,55 @@ def EnviarArchivo():
         enviarGCode(linea[nLine])
         nLine=nLine+1
         time.sleep(0.5)
+        
+def scCam():
+    global isCameraOn
+    global cap
+    while isCameraOn:
+        _,frame=cap.read()
+        cv2.imshow('Video',frame)
+        k=cv2.waitKey(30) & 0xff
+        if k==27:
+            cap.release()
+            cv2.destroyAllWindows()
+            isCameraOn=False
+            
+def scCam2():
+    global isCameraOn
+    global cap
+    cap=cv2.VideoCapture(0)
+    print("3 check")
+    while isCameraOn:
+        print("4 check")
+        _,frame=cap.read()
+        print("5 check")
+        cv2.imshow('Video',frame)
+        print("6 check")
+        k=cv2.waitKey(30) & 0xff
+        if k==27:
+            cap.release()
+            cv2.destroyAllWindows()
+            isCameraOn=False
 
-# def CameraOn():
-#     global camera
-#     camera.preview_fullscreen=False
-#     camera.preview_window=(90,100, 320, 240)
-#     camera.resolution=(640,480)
-#     camera.start_preview()
+def CameraOn():
+    global cap2
+    global isCameraOn
+    global isThreadOn
+    if isCameraOn==False and isThreadOn==False:
+        isThreadOn=True
+        isCameraOn=True
+        hiloCam.start()
+    else:
+        print("1 check")
+        #~ cap2=cv2.VideoCapture(0)
+        print("2 check")
+        time.sleep(0.2)
+        isCameraOn=True
+        scCam2()
 
-# def CameraOff():
-#     camera.stop_preview()
-#     camera.close()
-
-# def TakePhoto():
-#     camera.capture('imagenPru3.gif')
-    
+     
+#Define Hilo de la camara
+hiloCam = threading.Thread(target=scCam)
 ## Botones ##
 
 # Eje X
@@ -159,6 +204,10 @@ btnCargarArchivo.place(x=30,y=250)
 #Enviar Archivo
 btnEnviarArchivo = Button(win, text = 'Enviar Archivo', font = fuente2, command = EnviarArchivo,height = 1, width = 10, state='disable')
 btnEnviarArchivo.place(x=350,y=250)
+
+#Activar Camara
+btnActivarCamara = Button(win, text = 'Activar Camara', font = fuente2, command = CameraOn,height = 1, width = 15)
+btnActivarCamara.place(x=175,y=650)
 
 win.mainloop()
 
