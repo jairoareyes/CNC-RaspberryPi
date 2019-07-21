@@ -16,8 +16,6 @@ win.geometry("500x700+50+0")
 win.title("CNC Controller")
 myFont = tkinter.font.Font(family = 'Arial', size = 12)
 fuente2 = tkinter.font.Font(family = 'Times New Roman', size = 11)
-#~ scrollbar=Scrollbar(win)
-#~ scrollbar.pack(side=RIGHT, fill=Y)
 
 #Valirables
 numPasos= StringVar(win)
@@ -61,9 +59,6 @@ while varListbox<10:
 sbAvMM = Spinbox(win, from_=0.1, to=50,format='%.1f',increment=0.1 , textvariable=numPasos, font =fuente2)
 sbAvMM.place(x=130, y=30,width=50)
 
-#Define la captura de la camara
-cap=cv2.VideoCapture(0)
-cap2 =""
 def dirXPos1():
     global numPasos
     dirXPos(numPasos.get())
@@ -124,35 +119,23 @@ def EnviarArchivo():
         
 def scCam():
     global isCameraOn
-    global cap
+    cap=cv2.VideoCapture(0)
+    time.sleep(0.1)
     while isCameraOn:
         _,frame=cap.read()
-        cv2.imshow('Video',frame)
+        vector = cv2.resize(frame, (320,240))
+        winname = "Video"
+        cv2.namedWindow(winname)        # Create a named window
+        cv2.moveWindow(winname, 554,400)  # Move it to 
+        cv2.imshow(winname, vector) 
         k=cv2.waitKey(30) & 0xff
         if k==27:
             cap.release()
             cv2.destroyAllWindows()
             isCameraOn=False
             
-def scCam2():
-    global isCameraOn
-    global cap
-    cap=cv2.VideoCapture(0)
-    print("3 check")
-    while isCameraOn:
-        print("4 check")
-        _,frame=cap.read()
-        print("5 check")
-        cv2.imshow('Video',frame)
-        print("6 check")
-        k=cv2.waitKey(30) & 0xff
-        if k==27:
-            cap.release()
-            cv2.destroyAllWindows()
-            isCameraOn=False
 
 def CameraOn():
-    global cap2
     global isCameraOn
     global isThreadOn
     if isCameraOn==False and isThreadOn==False:
@@ -160,14 +143,9 @@ def CameraOn():
         isCameraOn=True
         hiloCam.start()
     else:
-        print("1 check")
-        #~ cap2=cv2.VideoCapture(0)
-        print("2 check")
-        time.sleep(0.2)
         isCameraOn=True
-        scCam2()
+        scCam()
 
-     
 #Define Hilo de la camara
 hiloCam = threading.Thread(target=scCam)
 ## Botones ##
