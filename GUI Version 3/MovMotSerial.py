@@ -1,6 +1,7 @@
 import time 
 import serial
-               
+    
+           
 ser = serial.Serial(            
     port='/dev/serial0',
     baudrate = 9600,
@@ -32,10 +33,7 @@ def dirXPos(valMM):
 	ser.write(var.encode())
 	time.sleep(0.2)
 	print("X Positivo "+var)
-	while ser.inWaiting()>0:
-		txt += ser.read()
-	if len(txt)>1:
-		print(txt)
+	readSerial()
 
 def dirXNeg(valMM):
 	txt=b''
@@ -45,10 +43,7 @@ def dirXNeg(valMM):
 	ser.write(var.encode())
 	time.sleep(0.2)
 	print("X Negativo "+var)
-	while ser.inWaiting() > 0:
-		txt += ser.read()
-	if len(txt)>1:
-		print(txt)
+	readSerial()
 
 def dirYPos(valMM):
 	txt=b''
@@ -58,10 +53,7 @@ def dirYPos(valMM):
 	ser.write(var.encode())
 	time.sleep(0.2)
 	print("Y Positivo "+var)        
-	while ser.inWaiting() > 0:
-		txt += ser.read()
-	if len(txt)>1:
-		print(txt)
+	readSerial()
 
 
 def dirYNeg(valMM):
@@ -72,10 +64,7 @@ def dirYNeg(valMM):
 	ser.write(var.encode())
 	time.sleep(0.2)
 	print("Y Negativo "+var)
-	while ser.inWaiting() > 0:
-		txt += ser.read()
-	if len(txt)>1:
-		print(txt)
+	readSerial()
 
 def dirZPos(valMM):
 	txt=b''
@@ -85,10 +74,7 @@ def dirZPos(valMM):
 	ser.write(var.encode())
 	time.sleep(0.2)
 	print("Z Positivo "+var)
-	while ser.inWaiting() > 0:
-		txt += ser.read()
-	if len(txt)>1:
-		print(txt)
+	readSerial()
 
 def dirZNeg(valMM):
 	txt=b''
@@ -98,11 +84,16 @@ def dirZNeg(valMM):
 	ser.write(var.encode())
 	time.sleep(0.2)
 	print("Z Negativo "+var) 
-	while ser.inWaiting() > 0:
-		txt += ser.read()
-	if len(txt)>1:
-		print(txt) 
+	readSerial()
 		
+def resetZero():
+	txt=b''
+	var='G92X0Y0Z0\r\n'
+	ser.write(var.encode())
+	time.sleep(0.2)
+	print("Reset Zero") 
+	readSerial()
+	
 def enviarGCode(valEnv):
 	#txt=b''
 	#~ var='G21G91G1Z-'
@@ -112,5 +103,15 @@ def enviarGCode(valEnv):
 	print('valor enviado: '+valEnv)
 	valEnv+='\r\n'
 	ser.write(valEnv.encode())
-	time.sleep(0.2)
-        
+	time.sleep(0.1)
+	readSerial()
+
+def readSerial():
+	txt=b''
+	recive=False
+	while not recive:
+		while ser.inWaiting() > 0:
+			txt += ser.read()
+		if len(txt)>1:
+			print(txt)
+			recive = True

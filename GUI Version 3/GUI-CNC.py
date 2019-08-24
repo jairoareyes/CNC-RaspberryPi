@@ -84,6 +84,7 @@ def dirZNeg1():
     dirZNeg(numPasos.get())
 
 def ResetCero():
+    resetZero()
     print("Reset Cero")
 
 
@@ -115,7 +116,7 @@ def EnviarArchivo():
         print(linea[nLine])
         enviarGCode(linea[nLine])
         nLine=nLine+1
-        time.sleep(0.5)
+        time.sleep(0.1)
         
 def scCam():
     global isCameraOn

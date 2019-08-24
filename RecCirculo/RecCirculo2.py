@@ -16,15 +16,14 @@ def captura():
 		centroX=circuloActual[0]
 		centroY=circuloActual[1]
 		radio=circuloActual[2]
-		cv2.circle(grayImage,(centroX,centroY),radio,(0,255,0),2)
-	cv2.imshow('Video',grayImage)
+		cv2.circle(frame,(centroX,centroY),radio,(0,255,0),2)
+	cv2.imshow('Video',frame)
 	k=cv2.waitKey(30) & 0xff
 	if k==27:
-		#scheduler.cancel(s)
 		cap.release()
 		cv2.destroyAllWindows()	
 	
 
 while True:
     captura()
-    time.sleep(0.5)
+    time.sleep(0.1)
