@@ -114,6 +114,8 @@ btnRstCero.place(x=220,y=150)
 btnCargarArchivo = Button(win, text = 'Cargar Archivo', font = fuente2, command = CargarArchivo,height = 1, width = 10)
 btnCargarArchivo.place(x=30,y=250)
 
+win.mainloop()
+    
 ## Imagen ##
 
 ##imagenpru = PhotoImage(file="imagenPru3.gif")
