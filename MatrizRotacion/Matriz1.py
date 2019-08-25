@@ -1,3 +1,5 @@
+# Falta Rotar los archivos que comienzan con G00
+
 from tkinter import *
 import tkinter.font
 from tkinter.filedialog import askopenfilename
@@ -38,9 +40,12 @@ while varListbox<10:
 
 def calculateRotation():
 	global matriz
+	global GCode
+	GCode2=[]
 	subStrX=''
 	subStrY=''
-	subLine=''
+	strRotated=[]
+	n=0
 	theta = np.radians(30) # Define el angulo de rotación
 	# Calcula la matriz de rotación
 	r = np.array(( (np.cos(theta), -np.sin(theta)), 
@@ -53,11 +58,25 @@ def calculateRotation():
 		vec = r.dot(vec)
 		subStrX = str(vec[0:1])
 		subStrY = str(vec[1:])
-		subStrX = 'X' + subStrX[1:subStrX.find(",")]
-		subStrY = 'Y' + subStrY[1:subStrY.find(",")]
-		subLine = 'G01 '+subStrX + subStrY
-		print (subLine)
-
+		subStrX = 'X' + subStrX[1:subStrX.find(".")+5] # Convierte el valor cauculado a Str con 4 decimales
+		subStrY = 'Y' + subStrY[1:subStrY.find(".")+5]
+		#strRotated = 'G01 '+subStrX + subStrY
+		strRotated.append('G01 '+subStrX + subStrY)
+	print (strRotated)
+	print('***************************')
+	lineas=GCode.splitlines() # Codifica el String
+	for line in lineas:
+		if 'G01 X' in line:
+			line = line.replace(line,strRotated[n])
+			n=n+1
+		GCode2.append(line)
+	print(GCode2)
+	
+	f = open ('GcodeRotado.nc','w')
+	for line2 in GCode2:
+		f.write(str(line2))
+		f.write("\n")
+	f.close()
 
 def CargarArchivo():
 	v = np.array((0,0))
