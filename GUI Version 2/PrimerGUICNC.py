@@ -1,12 +1,14 @@
 from tkinter import *
 import tkinter.font
-from MovMotores import *
+#from MovMotores import *
 from tkinter.filedialog import askopenfilename
 from tkinter.messagebox import showerror
 import time
-import picamera
+import os, sys
 
-camera = picamera.PiCamera()
+# import picamera
+
+# camera = picamera.PiCamera()
 
 ## GUI DEFINITIONS
 win = Tk()
@@ -82,19 +84,19 @@ def CargarArchivo():
             showerror("Open Source File", "Failed to read file")
         return
 
-def CameraOn():
-    global camera
-    camera.preview_fullscreen=False
-    camera.preview_window=(90,100, 320, 240)
-    camera.resolution=(640,480)
-    camera.start_preview()
+# def CameraOn():
+#     global camera
+#     camera.preview_fullscreen=False
+#     camera.preview_window=(90,100, 320, 240)
+#     camera.resolution=(640,480)
+#     camera.start_preview()
 
-def CameraOff():
-    camera.stop_preview()
-    camera.close()
+# def CameraOff():
+#     camera.stop_preview()
+#     camera.close()
 
-def TakePhoto():
-    camera.capture('imagenPru3.gif')
+# def TakePhoto():
+#     camera.capture('imagenPru3.gif')
     
 ## Botones ##
 
@@ -128,16 +130,16 @@ btnCargarArchivo = Button(win, text = 'Cargar Archivo', font = fuente2, command 
 btnCargarArchivo.place(x=30,y=250)
 
 ## Abrir Camara ##
-btnAbrirCam = Button(win, text = 'Abrir Cam', font = fuente2, command = CameraOn,height = 1, width = 10)
-btnAbrirCam.place(x=30,y=300)
+# btnAbrirCam = Button(win, text = 'Abrir Cam', font = fuente2, command = CameraOn,height = 1, width = 10)
+# btnAbrirCam.place(x=30,y=300)
 
-## Cerrar Camara ##
-btnCerrarCam = Button(win, text = 'Cerrar Cam', font = fuente2, command = CameraOff,height = 1, width = 10)
-btnCerrarCam.place(x=30,y=320)
+# ## Cerrar Camara ##
+# btnCerrarCam = Button(win, text = 'Cerrar Cam', font = fuente2, command = CameraOff,height = 1, width = 10)
+# btnCerrarCam.place(x=30,y=320)
 
-## Tomar Foto ##
-btnTomarFoto = Button(win, text = 'Tomar Foto', font = fuente2, command = TakePhoto,height = 1, width = 10)
-btnTomarFoto.place(x=30,y=340)
+# ## Tomar Foto ##
+# btnTomarFoto = Button(win, text = 'Tomar Foto', font = fuente2, command = TakePhoto,height = 1, width = 10)
+# btnTomarFoto.place(x=30,y=340)
 ##imagenpru = PhotoImage(file="imagenPru3.gif")
 ##lbIma = Label(win, image=imagenpru)
 ##lbIma.place(x=10,y=300)
