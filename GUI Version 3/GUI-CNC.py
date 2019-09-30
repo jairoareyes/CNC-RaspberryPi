@@ -3,6 +3,7 @@ import tkinter.font
 from MovMotSerial import *
 from tkinter.filedialog import askopenfilename
 from tkinter.messagebox import showerror
+from tkinter import ttk
 import cv2
 import numpy as np
 import time
@@ -21,9 +22,11 @@ fuente2 = tkinter.font.Font(family = 'Times New Roman', size = 11)
 numPasos= StringVar(win)
 GCode = StringVar(win)
 nLine = IntVar(win)
+
 nLine=0
 isCameraOn=False
 isThreadOn=False
+isSendingGCode=False
 
 ## LabelFrames ##
 
@@ -38,6 +41,10 @@ lfCargarArchivo.place(x=10,y=220, width=480, height=400)
 #Labels
 lbAvanzar = Label(win, text="Avanzar (mm)", font=fuente2)
 lbAvanzar.place(x=30,y=30)
+
+lbProgress = Label(win, text="Progreso : --/--", font=fuente2)
+lbProgress.place(x=150, y=255)
+
 
 #ListBox
 listbox = Listbox(win)
@@ -107,17 +114,24 @@ def CargarArchivo():
             showerror("Open Source File", "Failed to read file")
         return
 
-def EnviarArchivo():
+def sendingGCode():
     global GCode
     global nLine
+    global isSendingGCode
     print("Enviar Archivo")
     linea=GCode.splitlines() #Convierte el String en Array
-    for line in linea:
-        print(linea[nLine])
+    while isSendingGCode:
+        lbProgress.config(text=str("Progreso: " + str(nLine) + "/" + str(len(linea)) + " | " + str(int(nLine/len(linea)*100))+ "%"))
         enviarGCode(linea[nLine])
         nLine=nLine+1
-        time.sleep(0.1)
-        
+        if nLine==len(linea):
+            isSendingGCode=False
+
+def EnviarArchivo():
+    global isSendingGCode
+    isSendingGCode=True
+    hiloGCode.start() 
+
 def scCam():
     global isCameraOn
     cap=cv2.VideoCapture(0)
@@ -149,6 +163,10 @@ def CameraOn():
 
 #Define Hilo de la camara
 hiloCam = threading.Thread(target=scCam)
+
+#Define Hilo del envio de GCode
+hiloGCode = threading.Thread(target=sendingGCode)
+
 ## Botones ##
 
 # Eje X

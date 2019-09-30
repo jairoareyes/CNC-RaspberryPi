@@ -16,7 +16,8 @@ fuente2 = tkinter.font.Font(family = 'Times New Roman', size = 11)
 
 #Valirables
 GCode = StringVar(win)
-matriz = []
+matrizG01 = []
+matrizG00 = []
 
 #Cargar Archivo
 lfCargarArchivo = LabelFrame(win, text="Cargar Archivo",bd=4,font=fuente2)
@@ -39,13 +40,16 @@ while varListbox<10:
     varListbox=varListbox+1
 
 def calculateRotation():
-	global matriz
+	global matrizG01
+	global matrizG00
 	global GCode
-	GCode2=[]
-	subStrX=''
-	subStrY=''
-	strRotated=[]
+	GCode2 = []
+	subStrX = ''
+	subStrY = ''
+	strRotatedG01 = []
+	strRotatedG00 = []
 	n=0
+	m=0
 	theta = np.radians(30) # Define el angulo de rotación
 	# Calcula la matriz de rotación
 	r = np.array(( (np.cos(theta), -np.sin(theta)), 
@@ -54,23 +58,36 @@ def calculateRotation():
 	print('rotation matrix:')
 	print(r)
 	print('***************************')
-	for vec in matriz: # Convierte el punto vectorizado a GCode
-		vec = r.dot(vec)
-		subStrX = str(vec[0:1])
-		subStrY = str(vec[1:])
+	for vec01 in matrizG01: # Rota cada coordenada G01
+ 
+		vec01 = r.dot(vec01)
+		subStrX = str(vec01[0:1])
+		subStrY = str(vec01[1:])
 		subStrX = 'X' + subStrX[1:subStrX.find(".")+5] # Convierte el valor cauculado a Str con 4 decimales
 		subStrY = 'Y' + subStrY[1:subStrY.find(".")+5]
-		#strRotated = 'G01 '+subStrX + subStrY
-		strRotated.append('G01 '+subStrX + subStrY)
-	print (strRotated)
+		strRotatedG01.append('G01 '+subStrX + subStrY)
+	print (strRotatedG01)
 	print('***************************')
+	
+	for vec00 in matrizG00: # Rota cada coordenada G00
+		vec00 = r.dot(vec00)
+		subStrX = str(vec00[0:1])
+		subStrY = str(vec00[1:])
+		subStrX = 'X' + subStrX[1:subStrX.find(".")+5] # Convierte el valor cauculado a Str con 4 decimales
+		subStrY = 'Y' + subStrY[1:subStrY.find(".")+5]
+		strRotatedG00.append('G00 '+subStrX + subStrY)
+	print (strRotatedG00)
+	print('***************************')
+	
 	lineas=GCode.splitlines() # Codifica el String
-	for line in lineas:
+	for line in lineas: # Reemplaza las coordenadas rotadas en el GCode
 		if 'G01 X' in line:
-			line = line.replace(line,strRotated[n])
+			line = line.replace(line,strRotatedG01[n])
 			n=n+1
+		elif 'G00 X' in line:
+			line = line.replace(line,strRotatedG00[m])
+			m=m+1
 		GCode2.append(line)
-	print(GCode2)
 	
 	f = open ('GcodeRotado.nc','w')
 	for line2 in GCode2:
@@ -79,13 +96,14 @@ def calculateRotation():
 	f.close()
 
 def CargarArchivo():
-	v = np.array((0,0))
+	v1 = np.array((0,0))
+	v2 = np.array((0,0))
 	listbox.delete(0, END)
 	NombreArchivo = askopenfilename(filetypes=(("all files","*.*"),("NC Files","*.nc"),("Txt","*.txt")))
 	if NombreArchivo:
 		try:
 			global GCode
-			global matriz
+			global matrizG01
 			Archivo = open (NombreArchivo,'r')
 			GCode = Archivo.read()
 			Archivo.close()
@@ -93,11 +111,18 @@ def CargarArchivo():
 			Archivo = open (NombreArchivo,'r')
 			for line in Archivo:
 				if 'G01 X' in line: # Convierte el string de las cordenadas a float
-					v=(float(line[line.find("X")+1:line.find("Y"):]),float(line[line.find("Y")+1:]))
-					matriz.append(v) # Añade cada vector a una matriz
-				listbox.insert(END, line)
+					v1=(float(line[line.find("X")+1:line.find("Y"):]),float(line[line.find("Y")+1:]))
+					matrizG01.append(v1) # Añade cada vector a una matriz
+				elif 'G00 X' in line: 
+					v2=(float(line[line.find("X")+1:line.find("Y"):]),float(line[line.find("Y")+1:]))
+					matrizG00.append(v2) # Añade cada vector a una matriz
+				
+				listbox.insert(END, line) # Inserta la linea leida al ListBox
 			Archivo.close()
-			print(matriz)
+			print("Matriz G01")
+			print(matrizG01)
+			print("Matriz G00")
+			print(matrizG00)
 		except:
 			showerror("Open Source File", "Failed to read file")
 		return
