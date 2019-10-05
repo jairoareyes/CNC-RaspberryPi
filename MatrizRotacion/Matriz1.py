@@ -1,4 +1,4 @@
-# Falta Rotar los archivos que comienzan con G00
+# Rotacion de instrucciones G00 y G01 
 
 from tkinter import *
 import tkinter.font
