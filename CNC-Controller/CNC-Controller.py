@@ -15,9 +15,9 @@ import sched, time
 import threading
 import RPi.GPIO as GPIO
 
+# Puerto para la Autoalibración 
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(22, GPIO.IN)
-
 
 ## GUI DEFINITIONS
 win = Tk()
@@ -58,7 +58,6 @@ lbVideo = Label(win)
 lbVideo.place(x=540,y=330)
 img = PhotoImage(file='ImagenFondo.png')
 lbVideo.configure(image=img)
-
 
 #ListBox
 listbox = Listbox(win)
@@ -169,7 +168,6 @@ def EnviarArchivo():
     isSendingGCode=True
     hiloGCode.start()
 
-
 def scCam():
     global isCameraOn
     cap=cv2.VideoCapture(0)
@@ -178,6 +176,13 @@ def scCam():
         _, frame = cap.read()
         vector = cv2.resize(frame, (320,240))
         cv2image = cv2.cvtColor(vector, cv2.COLOR_BGR2RGBA)
+        grayImage=cv2.cvtColor(cv2image,cv2.COLOR_BGR2GRAY)
+        circles=cv2.HoughCircles(grayImage,cv2.HOUGH_GRADIENT,2,400, # Encuentra los circulos
+        param1=50,param2=30,
+        minRadius=30,maxRadius=100)
+        cirles=np.uint16(np.around(circles))
+        cv2.circle(cv2image,(circles[0][0][0],circles[0][0][1]),circles[0][0][2],(0,255,0),2) #Dibuja el circulo
+        cv2.circle(cv2image,(circles[0][0][0],circles[0][0][1]),2,(0,0,255),3) #Dibuja un punto el centro
         img = Image.fromarray(cv2image)
         imgtk = ImageTk.PhotoImage(image=img)
         lbVideo.imgtk = imgtk
