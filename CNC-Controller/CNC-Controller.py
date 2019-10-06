@@ -3,9 +3,12 @@ import tkinter.font
 from MovMotSerial import *
 from tkinter.filedialog import askopenfilename
 from tkinter.messagebox import showerror
+from tkinter import messagebox
 from tkinter import ttk
 import cv2
 import numpy as np
+import PIL
+from PIL import Image, ImageTk
 import time
 import os, sys
 import sched, time
@@ -18,7 +21,7 @@ GPIO.setup(22, GPIO.IN)
 
 ## GUI DEFINITIONS
 win = Tk()
-win.geometry("500x700+50+0")
+win.geometry("910x700+50+0")
 win.title("CNC Controller")
 myFont = tkinter.font.Font(family = 'Arial', size = 12)
 fuente2 = tkinter.font.Font(family = 'Times New Roman', size = 11)
@@ -26,13 +29,10 @@ fuente2 = tkinter.font.Font(family = 'Times New Roman', size = 11)
 #Valirables
 numPasos= StringVar(win)
 GCode = StringVar(win)
-nLine = IntVar(win)
 
-nLine=0
-isCameraOn=False
-isThreadOn=False
+isCameraOn = False
 isSendingGCode=False
-
+isSpindleOn = False
 ## LabelFrames ##
 
 #Calibracion
@@ -43,12 +43,21 @@ lfCalibracion.place(x=10,y=10, width=480, height=200)
 lfCargarArchivo = LabelFrame(win, text="Cargar Archivo",bd=4,font=fuente2)
 lfCargarArchivo.place(x=10,y=220, width=480, height=400)
 
+#Camara
+lfCamara = LabelFrame(win, text="Cámara",bd=4,font=fuente2)
+lfCamara.place(x=500,y=300, width=400, height=320)
+
 #Labels
 lbAvanzar = Label(win, text="Avanzar (mm)", font=fuente2)
 lbAvanzar.place(x=30,y=30)
 
 lbProgress = Label(win, text="Progreso : --/--", font=fuente2)
 lbProgress.place(x=150, y=255)
+
+lbVideo = Label(win)
+lbVideo.place(x=540,y=330)
+img = PhotoImage(file='ImagenFondo.png')
+lbVideo.configure(image=img)
 
 
 #ListBox
@@ -100,12 +109,15 @@ def ResetCero():
     print("Reset Cero")
 
 def SpindleOn():
-    spindleOn()
-    print("Spndle On")
-    
-def SpindleOff():
-    spindleOff()
-    print("Spndle off")
+    global isSpindleOn
+    if isSpindleOn:
+        btnActivarSpindle['text'] = 'Activar Spindle'
+        spindleOff()
+        isSpindleOn=False
+    else:
+        btnActivarSpindle['text'] = 'Desactivar Spindle'
+        spindleOn()
+        isSpindleOn=True
     
 def autoCalibrar():
     while not GPIO.input(22):
@@ -125,7 +137,7 @@ def CargarArchivo():
             Archivo = open (NombreArchivo,'r')
             GCode = Archivo.read()
             Archivo.close()
-            time.sleep(0.1);
+            time.sleep(0.1)
             Archivo = open (NombreArchivo,'r')
             for line in Archivo:
                 listbox.insert(END, line)
@@ -137,56 +149,58 @@ def CargarArchivo():
 
 def sendingGCode():
     global GCode
-    global nLine
+    nLine = 0
     global isSendingGCode
     print("Enviar Archivo")
     linea=GCode.splitlines() #Convierte el String en Array
     while isSendingGCode:
-        lbProgress.config(text=str("Progreso: " + str(nLine) + "/" + str(len(linea)) + " | " + str(int(nLine/len(linea)*100))+ "%"))
         enviarGCode(linea[nLine])
         nLine=nLine+1
+        lbProgress.config(text=str("Progreso: " + str(nLine) + "/" + str(len(linea)) + " | " + str(int(nLine/len(linea)*100))+ "%"))
         if nLine==len(linea):
             isSendingGCode=False
+            nLine=0
+            messagebox.showinfo("Finalizado", "¡Envío de código G finalizado!")
 
 def EnviarArchivo():
+    #Define Hilo del envio de GCode
+    hiloGCode = threading.Thread(target=sendingGCode)
     global isSendingGCode
     isSendingGCode=True
-    hiloGCode.start() 
+    hiloGCode.start()
+
 
 def scCam():
     global isCameraOn
     cap=cv2.VideoCapture(0)
     time.sleep(0.1)
     while isCameraOn:
-        _,frame=cap.read()
+        _, frame = cap.read()
         vector = cv2.resize(frame, (320,240))
-        winname = "Video"
-        cv2.namedWindow(winname)        # Create a named window
-        cv2.moveWindow(winname, 554,400)  # Move it to 
-        cv2.imshow(winname, vector) 
-        k=cv2.waitKey(30) & 0xff
-        if k==27:
-            cap.release()
-            cv2.destroyAllWindows()
-            isCameraOn=False
-            
+        cv2image = cv2.cvtColor(vector, cv2.COLOR_BGR2RGBA)
+        img = Image.fromarray(cv2image)
+        imgtk = ImageTk.PhotoImage(image=img)
+        lbVideo.imgtk = imgtk
+        lbVideo.configure(image=imgtk)
+        time.sleep(0.2)
+    cap.release()
+    cv2.destroyAllWindows()
+    img = PhotoImage(file='ImagenFondo.png')
+    lbVideo.configure(image=img)
 
+        
 def CameraOn():
     global isCameraOn
-    global isThreadOn
-    if isCameraOn==False and isThreadOn==False:
-        isThreadOn=True
-        isCameraOn=True
-        hiloCam.start()
+    
+    if isCameraOn:
+        isCameraOn = False
+        btnActivarCamara['text'] = 'Activar Camara'
     else:
-        isCameraOn=True
-        scCam()
-
-#Define Hilo de la camara
-hiloCam = threading.Thread(target=scCam)
-
-#Define Hilo del envio de GCode
-hiloGCode = threading.Thread(target=sendingGCode)
+        isCameraOn = True
+        btnActivarCamara['text'] = 'Desactivar Camara'
+        #Define Hilo de la camara
+        hiloCam = threading.Thread(target=scCam)
+        hiloCam.start()
 
 ## Botones ##
 
@@ -212,7 +226,7 @@ btnDirZNeg = Button(win, text = 'Z-', font = myFont, command = dirZNeg1 ,height 
 btnDirZNeg.place(x=400,y=90)
 
 #Reset Cero
-btnRstCero = Button(win, text = 'Reset Cero', font = fuente2, command = ResetCero ,height = 1, width = 6)
+btnRstCero = Button(win, text = 'Reset Cero', font = fuente2, command = ResetCero ,height = 1, width = 8)
 btnRstCero.place(x=220,y=150)
 
 #Cargar Archivo
@@ -225,15 +239,11 @@ btnEnviarArchivo.place(x=350,y=250)
 
 #Activar Camara
 btnActivarCamara = Button(win, text = 'Activar Camara', font = fuente2, command = CameraOn,height = 1, width = 15)
-btnActivarCamara.place(x=175,y=650)
+btnActivarCamara.place(x=630,y=580)
 
 #Activar Spindle
-btnActivarSpindle = Button(win, text = 'Activar Spindel', font = fuente2, command = SpindleOn,height = 1, width = 15)
-btnActivarSpindle.place(x=30,y=90)
-
-#Desactivar Spindle
-btnDesactivarSpindle = Button(win, text = 'Desactivar Spindel', font = fuente2, command = SpindleOff,height = 1, width = 15)
-btnDesactivarSpindle.place(x=30,y=130)
+btnActivarSpindle = Button(win, text = 'Activar Spindle', font = fuente2, command = SpindleOn,height = 1, width = 15)
+btnActivarSpindle.place(x=30,y=120)
 
 #AutoCalibracion
 btnAutoCalibracion= Button(win, text = 'Autocalibrar', font = fuente2, command = autoCalibrar,height = 1, width = 15)
