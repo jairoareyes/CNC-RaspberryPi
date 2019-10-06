@@ -21,7 +21,7 @@ GPIO.setup(22, GPIO.IN)
 
 ## GUI DEFINITIONS
 win = Tk()
-win.geometry("910x700+50+0")
+win.geometry("910x700+0+0")
 win.title("CNC Controller")
 myFont = tkinter.font.Font(family = 'Arial', size = 12)
 fuente2 = tkinter.font.Font(family = 'Times New Roman', size = 11)
@@ -33,6 +33,8 @@ GCode = StringVar(win)
 isCameraOn = False
 isSendingGCode=False
 isSpindleOn = False
+isStopSending = True
+
 ## LabelFrames ##
 
 #Calibracion
@@ -151,23 +153,59 @@ def sendingGCode():
     global isSendingGCode
     print("Enviar Archivo")
     linea=GCode.splitlines() #Convierte el String en Array
+    btnCargarArchivo['state'] = 'disable'
+    btnActivarCamara['state'] = 'disable'
+    btnActivarSpindle['state'] = 'disable'
+    btnAutoCalibracion['state'] = 'disable'
+    btnDirXNeg['state'] = 'disable'
+    btnDirXPos['state'] = 'disable'
+    btnDirYNeg['state'] = 'disable'
+    btnDirYPos['state'] = 'disable'
+    btnDirZNeg['state'] = 'disable'
+    btnDirZPos['state'] = 'disable'
+    btnRstCero['state'] = 'disable'
     while isSendingGCode:
-        enviarGCode(linea[nLine])
-        nLine=nLine+1
-        lbProgress.config(text=str("Progreso: " + str(nLine) + "/" + str(len(linea)) + " | " + str(int(nLine/len(linea)*100))+ "%"))
-        if nLine==len(linea):
-            isSendingGCode=False
-            nLine=0
-            messagebox.showinfo("Finalizado", "¡Envío de código G finalizado!")
+        if not isStopSending:
+            enviarGCode(linea[nLine])
+            nLine=nLine+1
+            lbProgress.config(text=str("Progreso: " + str(nLine) + "/" + str(len(linea)) + " | " + str(int(nLine/len(linea)*100))+ "%"))
+            if nLine==len(linea):
+                isSendingGCode=False
+                nLine=0
+                messagebox.showinfo("Finalizado", "¡Envío de código G finalizado!")
+                btnCargarArchivo['state'] = 'normal'
+                btnActivarCamara['state'] = 'normal'
+                btnActivarSpindle['state'] = 'normal'
+                btnAutoCalibracion['state'] = 'normal'
+                btnDirXNeg['state'] = 'normal'
+                btnDirXPos['state'] = 'normal'
+                btnDirYNeg['state'] = 'normal'
+                btnDirYPos['state'] = 'normal'
+                btnDirZNeg['state'] = 'normal'
+                btnDirZPos['state'] = 'normal'
+                btnRstCero['state']='normal'
+                btnEnviarArchivo['text'] = 'Enviar Archivo'
 
 def EnviarArchivo():
-    #Define Hilo del envio de GCode
-    hiloGCode = threading.Thread(target=sendingGCode)
+    global isStopSending
     global isSendingGCode
-    isSendingGCode=True
-    hiloGCode.start()
+
+    if isSendingGCode and not isStopSending:
+        isStopSending = True
+        btnEnviarArchivo['text'] = 'Seguir Enviando'
+    elif not isSendingGCode and isStopSending:
+        btnEnviarArchivo['text'] = 'Pausar Envío'
+        #Define Hilo del envio de GCode
+        hiloGCode = threading.Thread(target=sendingGCode)
+        isSendingGCode=True
+        isStopSending=False
+        hiloGCode.start()
+    else:
+        btnEnviarArchivo['text'] = 'Pausar Envío'
+        isStopSending=False
 
 def scCam():
+    centro = []
     global isCameraOn
     cap=cv2.VideoCapture(0)
     time.sleep(0.1)
@@ -181,14 +219,16 @@ def scCam():
         minRadius=10,maxRadius=100)
         try:
             cirles=np.uint16(np.around(circles))
-            cv2.circle(cv2image,(circles[0][0][0],circles[0][0][1]),circles[0][0][2],(0,255,0),2) #Dibuja el circulo
+            centro=[circles[0][0][0],circles[0][0][1]] # Guarda las cordenadas del centro del circulo
+            cv2.circle(cv2image,(centro[0],centro[1]),circles[0][0][2],(0,255,0),2) #Dibuja el circulo
             cv2.circle(cv2image,(circles[0][0][0],circles[0][0][1]),2,(0,0,255),3) #Dibuja un punto el centro
-            cv2.rectangle(cv2image, (120, 80), (200, 160), (252, 255, 0), 1,1)
-            print(str(circles[0][0][0]) + " , " + str(circles[0][0][1]))
+            cv2.rectangle(cv2image, (120, 80), (200, 160), (252, 255, 0), 1,1) #Dibuja un rectangulo   
+            print(str(centro[0]) + " , " + str(centro[1]))
             img = Image.fromarray(cv2image)
             imgtk = ImageTk.PhotoImage(image=img)
             lbVideo.imgtk = imgtk
             lbVideo.configure(image=imgtk)
+            autoSearchCenter(centro[0],centro[1])
         except:
             print("No Circles")
         time.sleep(0.2)
@@ -197,7 +237,10 @@ def scCam():
     img = PhotoImage(file='ImagenFondo.png')
     lbVideo.configure(image=img)
 
-        
+def autoSearchCenter(x,y):
+    if x>120 and x<200 and y>80 and y<160:
+        print("Circle on the zone")
+
 def CameraOn():
     global isCameraOn
     
