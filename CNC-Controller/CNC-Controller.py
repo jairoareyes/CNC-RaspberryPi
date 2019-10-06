@@ -124,7 +124,6 @@ def autoCalibrar():
         time.sleep(0.1)
     ResetCero()
     dirZPos("3.0")
-    #stButton=GPIO.input(22)
     print("Calibracion Finalizada!")
 
 def CargarArchivo():
@@ -178,15 +177,20 @@ def scCam():
         cv2image = cv2.cvtColor(vector, cv2.COLOR_BGR2RGBA)
         grayImage=cv2.cvtColor(cv2image,cv2.COLOR_BGR2GRAY)
         circles=cv2.HoughCircles(grayImage,cv2.HOUGH_GRADIENT,2,400, # Encuentra los circulos
-        param1=50,param2=30,
-        minRadius=30,maxRadius=100)
-        cirles=np.uint16(np.around(circles))
-        cv2.circle(cv2image,(circles[0][0][0],circles[0][0][1]),circles[0][0][2],(0,255,0),2) #Dibuja el circulo
-        cv2.circle(cv2image,(circles[0][0][0],circles[0][0][1]),2,(0,0,255),3) #Dibuja un punto el centro
-        img = Image.fromarray(cv2image)
-        imgtk = ImageTk.PhotoImage(image=img)
-        lbVideo.imgtk = imgtk
-        lbVideo.configure(image=imgtk)
+        param1=40,param2=40,
+        minRadius=10,maxRadius=100)
+        try:
+            cirles=np.uint16(np.around(circles))
+            cv2.circle(cv2image,(circles[0][0][0],circles[0][0][1]),circles[0][0][2],(0,255,0),2) #Dibuja el circulo
+            cv2.circle(cv2image,(circles[0][0][0],circles[0][0][1]),2,(0,0,255),3) #Dibuja un punto el centro
+            cv2.rectangle(cv2image, (120, 80), (200, 160), (252, 255, 0), 1,1)
+            print(str(circles[0][0][0]) + " , " + str(circles[0][0][1]))
+            img = Image.fromarray(cv2image)
+            imgtk = ImageTk.PhotoImage(image=img)
+            lbVideo.imgtk = imgtk
+            lbVideo.configure(image=imgtk)
+        except:
+            print("No Circles")
         time.sleep(0.2)
     cap.release()
     cv2.destroyAllWindows()
