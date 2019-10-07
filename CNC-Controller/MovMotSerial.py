@@ -1,6 +1,6 @@
 import time 
 import serial
-    
+from PosYRot import *  
            
 ser = serial.Serial(            
     port='/dev/serial0',
@@ -17,8 +17,8 @@ def dirXPos(valMM):
 	var+=valMM
 	var+='1F200\r\n'
 	ser.write(var.encode())
+	addX(float(valMM)*1)
 	time.sleep(0.2)
-	print("X Positivo "+var)
 	readSerial()
 
 def dirXNeg(valMM):
@@ -27,8 +27,8 @@ def dirXNeg(valMM):
 	var+=valMM
 	var+='1F200\r\n'
 	ser.write(var.encode())
+	addX(float(valMM)*-1)
 	time.sleep(0.2)
-	print("X Negativo "+var)
 	readSerial()
 
 def dirYPos(valMM):
@@ -37,8 +37,8 @@ def dirYPos(valMM):
 	var+=valMM
 	var+='1F200\r\n'
 	ser.write(var.encode())
-	time.sleep(0.2)
-	print("Y Positivo "+var)        
+	addY(float(valMM)*1)
+	time.sleep(0.2)       
 	readSerial()
 
 
@@ -48,8 +48,8 @@ def dirYNeg(valMM):
 	var+=valMM
 	var+='1F200\r\n'
 	ser.write(var.encode())
+	addY(float(valMM)*-1)
 	time.sleep(0.2)
-	print("Y Negativo "+var)
 	readSerial()
 
 def dirZPos(valMM):
@@ -59,7 +59,6 @@ def dirZPos(valMM):
 	var+='1F200\r\n'
 	ser.write(var.encode())
 	time.sleep(0.2)
-	print("Z Positivo "+var)
 	readSerial()
 
 def dirZNeg(valMM):
@@ -69,15 +68,15 @@ def dirZNeg(valMM):
 	var+='1F200\r\n'
 	ser.write(var.encode())
 	time.sleep(0.2)
-	print("Z Negativo "+var) 
 	readSerial()
 		
 def resetZero():
 	txt=b''
 	var='G92X0Y0Z0\r\n'
 	ser.write(var.encode())
+	rstZero()
 	time.sleep(0.2)
-	print("Reset Zero") 
+	print("reset cero")
 	readSerial()
 	
 def spindleOn():
@@ -95,7 +94,6 @@ def enviarGCode(valEnv):
 	print('valor enviado: '+valEnv)
 	valEnv+='\r\n'
 	ser.write(valEnv.encode())
-	#time.sleep(0.1)
 	readSerial()
 
 def readSerial():
@@ -107,5 +105,5 @@ def readSerial():
 		if len(txt)>1:
 			print(txt)
 			recive = True
-		print("No Recive!!!")
+		#print("No Recive!!!")
 		time.sleep(0.1)

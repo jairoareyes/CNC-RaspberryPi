@@ -26,12 +26,17 @@ win.title("CNC Controller")
 myFont = tkinter.font.Font(family = 'Arial', size = 12)
 fuente2 = tkinter.font.Font(family = 'Times New Roman', size = 11)
 
+resetZero() # Toma como cero la pocicion de encendido
+
 #Valirables
 numPasos= StringVar(win)
 GCode = StringVar(win)
+nFidu = IntVar(win)
+nFidu = 0
+
 
 isCameraOn = False
-isSendingGCode=False
+isSendingGCode = False
 isSpindleOn = False
 isStopSending = True
 
@@ -107,7 +112,6 @@ def dirZNeg1():
 
 def ResetCero():
     resetZero()
-    print("Reset Cero")
 
 def SpindleOn():
     global isSpindleOn
@@ -239,7 +243,23 @@ def scCam():
 
 def autoSearchCenter(x,y):
     if x>120 and x<200 and y>80 and y<160:
-        print("Circle on the zone")
+        if x>160:
+            print("X Pos")
+            dirXPos("0.1")
+        elif x<160:
+            print("X Neg")
+            dirXNeg("0.1")
+        elif x==160:
+            print("X Centered")
+        if y>120:
+            print("Y Pos")
+            dirYPos("0.1")
+        elif y<120:
+            print("Y Neg")
+            dirYNeg("0.1")
+        elif y==120:
+            print("Y Centered")
+            
 
 def CameraOn():
     global isCameraOn
@@ -253,6 +273,19 @@ def CameraOn():
         #Define Hilo de la camara
         hiloCam = threading.Thread(target=scCam)
         hiloCam.start()
+
+def cordActual():
+    print("X: " + str(getX()) + " | Y: " + str(getY()))
+
+def fiducials():
+    global nFidu
+    saveFidu(nFidu)
+    if nFidu == 0: 
+        btnFiducial['text'] = 'Fidu. 2'
+        # saveFidu(nFidu)
+        nFidu = nFidu + 1
+    elif nFidu == 1:
+        btnFiducial['state'] = 'disable'
 
 ## Botones ##
 
@@ -300,6 +333,14 @@ btnActivarSpindle.place(x=30,y=120)
 #AutoCalibracion
 btnAutoCalibracion= Button(win, text = 'Autocalibrar', font = fuente2, command = autoCalibrar,height = 1, width = 15)
 btnAutoCalibracion.place(x=30,y=170)
+
+#Cordenada actual
+btnCordenadaActual = Button(win, text = 'Cord. Actual', font = fuente2, command = cordActual,height = 1, width = 15)
+btnCordenadaActual.place(x=200,y=620)
+
+#Fiducials
+btnFiducial = Button(win, text = 'Fidu. 1', font = fuente2, command = fiducials,height = 1, width = 8)
+btnFiducial.place(x=780,y=580)
 
 win.mainloop()
 
