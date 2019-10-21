@@ -1,4 +1,3 @@
-
 import numpy as np
 
 x = 0
@@ -32,10 +31,18 @@ def saveFidu(pos):
     global y
     global corFidu
     if pos==0:
-        corFidu = ([[pos],[x,y]])    
+        corFidu = ([[x,y]])    
     else:
-        print("else")
-        vec = np.array([[],[]])
-        vec = ([[pos],[x,y]])
+        angle = 0
+        dx = 0
+        dy = 0
+        vec = np.array([[]])
+        vec = ([[x,y]])
         corFidu=np.concatenate((corFidu, vec))
+        dx = corFidu[1,0]-corFidu[0,0]
+        dy = corFidu[1,1]-corFidu[0,1]
+        h = (dx**2+dy**2)**(1/2)
+        angle = np.arcsin((dy/h))
+        print("------- Angulo -------")
+        print(np.degrees(angle))   
     print(corFidu)

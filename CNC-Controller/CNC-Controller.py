@@ -125,7 +125,11 @@ def dirZNeg1():
     dirZNeg(numPasos.get())
 
 def ResetCero():
+    global nFidu
     resetZero()
+    nFidu=0
+    btnFiducial['state'] = 'normal'
+    btnFiducial['text'] = 'Fidu. 1'
 
 def SpindleOn():
     global isSpindleOn
@@ -277,8 +281,7 @@ def autoSearchCenter(x,y):
             dirYNeg("0.1")
         elif y==120:
             print("Y Centered")
-            
-
+        
 def CameraOn():
     global isCameraOn
     
@@ -300,7 +303,6 @@ def fiducials():
     saveFidu(nFidu)
     if nFidu == 0: 
         btnFiducial['text'] = 'Fidu. 2'
-        # saveFidu(nFidu)
         nFidu = nFidu + 1
     elif nFidu == 1:
         btnFiducial['state'] = 'disable'
