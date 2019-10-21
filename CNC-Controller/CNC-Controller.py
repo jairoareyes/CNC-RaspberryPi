@@ -58,8 +58,11 @@ lfCamara.place(x=500,y=300, width=400, height=320)
 lbAvanzar = Label(win, text="Avanzar (mm)", font=fuente2)
 lbAvanzar.place(x=30,y=30)
 
+lbCapa = Label(win, text="Capa:", font=fuente2)
+lbCapa.place(x=30,y=255)
+
 lbProgress = Label(win, text="Progreso : --/--", font=fuente2)
-lbProgress.place(x=150, y=255)
+lbProgress.place(x=150, y=305)
 
 lbVideo = Label(win)
 lbVideo.place(x=540,y=330)
@@ -69,7 +72,7 @@ lbVideo.configure(image=img)
 #ListBox
 listbox = Listbox(win)
 listbox.pack()
-listbox.place(x=30, y=300, width=440, height=300)
+listbox.place(x=30, y=350, width=440, height=250)
 #Scrollbar
 vscroll = Scrollbar(listbox, orient=VERTICAL, command=listbox.yview)
 
@@ -85,6 +88,17 @@ while varListbox<10:
 #Spinbox
 sbAvMM = Spinbox(win, from_=0.1, to=50,format='%.1f',increment=0.1 , textvariable=numPasos, font =fuente2)
 sbAvMM.place(x=130, y=30,width=50)
+
+def ComboSelect(event):
+    print(combo.current())
+    btnCargarArchivo['state'] = 'normal'
+
+#ComboBox
+combo = ttk.Combobox(win)
+combo.place(x=75, y=255)
+
+combo["values"] = ["Drill", "Top Layer", "Bottom Layer"]
+combo.bind("<<ComboboxSelected>>", ComboSelect)
 
 def dirXPos1():
     global numPasos
@@ -147,6 +161,7 @@ def CargarArchivo():
                 listbox.insert(END, line)
             Archivo.close()
             btnEnviarArchivo['state'] = 'normal'
+            lbProgress.config(text=str("Progreso: 0/" + str(len(GCode.splitlines())) + " | 0%"  ))
         except: 
             showerror("Open Source File", "Failed to read file")
         return
@@ -155,6 +170,7 @@ def sendingGCode():
     global GCode
     nLine = 0
     global isSendingGCode
+    global isStopSending
     print("Enviar Archivo")
     linea=GCode.splitlines() #Convierte el String en Array
     btnCargarArchivo['state'] = 'disable'
@@ -175,9 +191,10 @@ def sendingGCode():
             lbProgress.config(text=str("Progreso: " + str(nLine) + "/" + str(len(linea)) + " | " + str(int(nLine/len(linea)*100))+ "%"))
             if nLine==len(linea):
                 isSendingGCode=False
+                isStopSending=True
                 nLine=0
                 messagebox.showinfo("Finalizado", "¡Envío de código G finalizado!")
-                btnCargarArchivo['state'] = 'normal'
+                #btnCargarArchivo['state'] = 'normal'
                 btnActivarCamara['state'] = 'normal'
                 btnActivarSpindle['state'] = 'normal'
                 btnAutoCalibracion['state'] = 'normal'
@@ -188,23 +205,24 @@ def sendingGCode():
                 btnDirZNeg['state'] = 'normal'
                 btnDirZPos['state'] = 'normal'
                 btnRstCero['state']='normal'
+                btnEnviarArchivo['state']='disable'
                 btnEnviarArchivo['text'] = 'Enviar Archivo'
 
 def EnviarArchivo():
     global isStopSending
     global isSendingGCode
 
-    if isSendingGCode and not isStopSending:
+    if isSendingGCode and not isStopSending: #Entra cuando se pausa el envio
         isStopSending = True
         btnEnviarArchivo['text'] = 'Seguir Enviando'
-    elif not isSendingGCode and isStopSending:
+    elif not isSendingGCode and isStopSending: #Entra cuando se va a empezar a enviar
         btnEnviarArchivo['text'] = 'Pausar Envío'
         #Define Hilo del envio de GCode
         hiloGCode = threading.Thread(target=sendingGCode)
         isSendingGCode=True
         isStopSending=False
         hiloGCode.start()
-    else:
+    else: #Entra cuando se está enviando
         btnEnviarArchivo['text'] = 'Pausar Envío'
         isStopSending=False
 
@@ -315,12 +333,12 @@ btnRstCero = Button(win, text = 'Reset Cero', font = fuente2, command = ResetCer
 btnRstCero.place(x=220,y=150)
 
 #Cargar Archivo
-btnCargarArchivo = Button(win, text = 'Cargar Archivo', font = fuente2, command = CargarArchivo,height = 1, width = 10)
-btnCargarArchivo.place(x=30,y=250)
+btnCargarArchivo = Button(win, text = 'Cargar Archivo', font = fuente2, command = CargarArchivo,height = 1, width = 10, state='disable')
+btnCargarArchivo.place(x=30,y=300)
 
 #Enviar Archivo
 btnEnviarArchivo = Button(win, text = 'Enviar Archivo', font = fuente2, command = EnviarArchivo,height = 1, width = 10, state='disable')
-btnEnviarArchivo.place(x=350,y=250)
+btnEnviarArchivo.place(x=350,y=300)
 
 #Activar Camara
 btnActivarCamara = Button(win, text = 'Activar Camara', font = fuente2, command = CameraOn,height = 1, width = 15)
