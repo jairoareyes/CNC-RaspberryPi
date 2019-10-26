@@ -18,6 +18,7 @@ import RPi.GPIO as GPIO
 # Puerto para la Autoalibración 
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(22, GPIO.IN)
+GPIO.setup(23, GPIO.IN)
 
 ## GUI DEFINITIONS
 win = Tk()
@@ -26,14 +27,14 @@ win.title("CNC Controller")
 myFont = tkinter.font.Font(family = 'Arial', size = 12)
 fuente2 = tkinter.font.Font(family = 'Times New Roman', size = 11)
 
-resetZero() # Toma como cero la pocicion de encendido
+#resetZero() # Toma como cero la pocicion de encendido
 
 #Valirables
 numPasos= StringVar(win)
 GCode = StringVar(win)
 nFidu = IntVar(win)
 nFidu = 0
-
+layer = IntVar(win)
 
 isCameraOn = False
 isSendingGCode = False
@@ -90,8 +91,13 @@ sbAvMM = Spinbox(win, from_=0.1, to=50,format='%.1f',increment=0.1 , textvariabl
 sbAvMM.place(x=130, y=30,width=50)
 
 def ComboSelect(event):
-    print(combo.current())
+    global layer
+    global nFidu
+    nFidu=0
+    layer = combo.current() 
     btnCargarArchivo['state'] = 'normal'
+    btnFiducial['state'] = 'normal'
+    btnFiducial['text'] = 'Fidu. 1'
 
 #ComboBox
 combo = ttk.Combobox(win)
@@ -131,6 +137,16 @@ def ResetCero():
     btnFiducial['state'] = 'normal'
     btnFiducial['text'] = 'Fidu. 1'
 
+def ResetCeroZ():
+    global nFidu
+    resetZeroZ()
+    # nFidu=0
+    # btnFiducial['state'] = 'normal'
+    # btnFiducial['text'] = 'Fidu. 1'
+
+def HomeXY():
+    homeXY()
+
 def SpindleOn():
     global isSpindleOn
     if isSpindleOn:
@@ -143,10 +159,10 @@ def SpindleOn():
         isSpindleOn=True
     
 def autoCalibrar():
-    while not GPIO.input(22):
-        dirZNeg("0.1")
-        time.sleep(0.1)
-    ResetCero()
+    while not GPIO.input(23):
+        dirZNeg("0.04")
+    #dirZNeg("0.1")
+    ResetCeroZ()
     dirZPos("3.0")
     print("Calibracion Finalizada!")
 
@@ -156,16 +172,29 @@ def CargarArchivo():
     if NombreArchivo:
         try:
             global GCode
+            global layer
             Archivo = open (NombreArchivo,'r')
             GCode = Archivo.read()
             Archivo.close()
             time.sleep(0.1)
-            Archivo = open (NombreArchivo,'r')
-            for line in Archivo:
-                listbox.insert(END, line)
-            Archivo.close()
+            # Archivo = open (NombreArchivo,'r')
+            # for line in Archivo:
+            #     listbox.insert(END, line)
+            # Archivo.close()
             btnEnviarArchivo['state'] = 'normal'
             lbProgress.config(text=str("Progreso: 0/" + str(len(GCode.splitlines())) + " | 0%"  ))
+            if layer == 2:
+                getVectorCord(NombreArchivo, GCode) # Obtiene las coordenas de archivo
+                GCode = getGcodeRotated()
+                Archivo = open ('GcodeRotado.nc','r')
+                for line in Archivo:
+                    listbox.insert(END, line)
+                Archivo.close()
+                time.sleep(0.1)
+                Archivo = open ('GcodeRotado.nc','r')
+                GCode = Archivo.read()
+                Archivo.close()
+                time.sleep(0.1)
         except: 
             showerror("Open Source File", "Failed to read file")
         return
@@ -188,6 +217,7 @@ def sendingGCode():
     btnDirZNeg['state'] = 'disable'
     btnDirZPos['state'] = 'disable'
     btnRstCero['state'] = 'disable'
+    btnDetenerEnvio['state'] = 'normal'
     while isSendingGCode:
         if not isStopSending:
             enviarGCode(linea[nLine])
@@ -211,6 +241,7 @@ def sendingGCode():
                 btnRstCero['state']='normal'
                 btnEnviarArchivo['state']='disable'
                 btnEnviarArchivo['text'] = 'Enviar Archivo'
+                btnDetenerEnvio['state'] = 'disable'
 
 def EnviarArchivo():
     global isStopSending
@@ -229,6 +260,33 @@ def EnviarArchivo():
     else: #Entra cuando se está enviando
         btnEnviarArchivo['text'] = 'Pausar Envío'
         isStopSending=False
+    
+def DetenerEnvio():
+    global isSendingGCode
+    global isStopSending
+    global nLine
+    isSendingGCode=False    
+    isStopSending=True
+    time.sleep(0.2)
+    dirZPos("3.0")
+    spindleOff()
+    nLine=0
+    homeXY()
+    messagebox.showinfo("Detenido", "¡Envío de código G detenido!")
+    #btnCargarArchivo['state'] = 'normal'
+    btnActivarCamara['state'] = 'normal'
+    btnActivarSpindle['state'] = 'normal'
+    btnAutoCalibracion['state'] = 'normal'
+    btnDirXNeg['state'] = 'normal'
+    btnDirXPos['state'] = 'normal'
+    btnDirYNeg['state'] = 'normal'
+    btnDirYPos['state'] = 'normal'
+    btnDirZNeg['state'] = 'normal'
+    btnDirZPos['state'] = 'normal'
+    btnRstCero['state']='normal'
+    btnEnviarArchivo['state']='normal'
+    btnEnviarArchivo['text'] = 'Enviar Archivo'
+    btnDetenerEnvio['state'] = 'disable'
 
 def scCam():
     centro = []
@@ -300,12 +358,22 @@ def cordActual():
 
 def fiducials():
     global nFidu
-    saveFidu(nFidu)
-    if nFidu == 0: 
-        btnFiducial['text'] = 'Fidu. 2'
-        nFidu = nFidu + 1
-    elif nFidu == 1:
-        btnFiducial['state'] = 'disable'
+    global layer
+    if layer == 0 or layer == 1:
+        saveFidu1(nFidu)
+        if nFidu == 0: 
+            btnFiducial['text'] = 'Fidu. 2'
+            nFidu = nFidu + 1
+        elif nFidu == 1:
+            btnFiducial['state'] = 'disable'
+    elif layer == 2:
+        print ("Bottom")
+        saveFidu2(nFidu)
+        if nFidu == 0: 
+            btnFiducial['text'] = 'Fidu. 2'
+            nFidu = nFidu + 1
+        elif nFidu == 1:
+            btnFiducial['state'] = 'disable'
 
 ## Botones ##
 
@@ -334,6 +402,10 @@ btnDirZNeg.place(x=400,y=90)
 btnRstCero = Button(win, text = 'Reset Cero', font = fuente2, command = ResetCero ,height = 1, width = 8)
 btnRstCero.place(x=220,y=150)
 
+#HOME
+btnHomeXY = Button(win, text = 'Home XY', font = fuente2, command = HomeXY ,height = 1, width = 8)
+btnHomeXY.place(x=350,y=150)
+
 #Cargar Archivo
 btnCargarArchivo = Button(win, text = 'Cargar Archivo', font = fuente2, command = CargarArchivo,height = 1, width = 10, state='disable')
 btnCargarArchivo.place(x=30,y=300)
@@ -341,6 +413,10 @@ btnCargarArchivo.place(x=30,y=300)
 #Enviar Archivo
 btnEnviarArchivo = Button(win, text = 'Enviar Archivo', font = fuente2, command = EnviarArchivo,height = 1, width = 10, state='disable')
 btnEnviarArchivo.place(x=350,y=300)
+
+#Detener envío
+btnDetenerEnvio = Button(win, text = 'Detener Envío', font = fuente2, command = DetenerEnvio,height = 1, width = 10, state='disable')
+btnDetenerEnvio.place(x=350,y=250)
 
 #Activar Camara
 btnActivarCamara = Button(win, text = 'Activar Camara', font = fuente2, command = CameraOn,height = 1, width = 15)

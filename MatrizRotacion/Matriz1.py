@@ -50,7 +50,7 @@ def calculateRotation():
 	strRotatedG00 = []
 	n=0
 	m=0
-	theta = np.radians(30) # Define el angulo de rotación
+	theta = np.radians(-30) # Define el angulo de rotación
 	# Calcula la matriz de rotación
 	r = np.array(( (np.cos(theta), -np.sin(theta)), 
 				   (np.sin(theta),  np.cos(theta)) ))
