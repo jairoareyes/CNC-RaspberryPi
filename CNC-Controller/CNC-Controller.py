@@ -17,15 +17,14 @@ import RPi.GPIO as GPIO
 
 # Puerto para la Autoalibración 
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(22, GPIO.IN)
 GPIO.setup(23, GPIO.IN)
 
 ## GUI DEFINITIONS
 win = Tk()
 win.geometry("910x700+0+0")
 win.title("CNC Controller")
-myFont = tkinter.font.Font(family = 'Arial', size = 12)
-fuente2 = tkinter.font.Font(family = 'Times New Roman', size = 11)
+myFont = tkinter.font.Font(family = 'Piboto', size = 12)
+fuente2 = tkinter.font.Font(family = 'Piboto', size = 11)
 
 #resetZero() # Toma como cero la pocicion de encendido
 
@@ -43,17 +42,22 @@ isStopSending = True
 
 ## LabelFrames ##
 
-#Calibracion
+ #Calibracion
 lfCalibracion = LabelFrame(win, text="Calibración",bd=4,font=fuente2)
 lfCalibracion.place(x=10,y=10, width=480, height=200)
 
-#Cargar Archivo
+ #Cargar Archivo
 lfCargarArchivo = LabelFrame(win, text="Cargar Archivo",bd=4,font=fuente2)
 lfCargarArchivo.place(x=10,y=220, width=480, height=400)
 
-#Camara
+ #Camara
 lfCamara = LabelFrame(win, text="Cámara",bd=4,font=fuente2)
 lfCamara.place(x=500,y=300, width=400, height=320)
+
+ #Grafica
+lfGrafica = LabelFrame(win, text="Gráfica",bd=4,font=fuente2)
+lfGrafica.place(x=500,y=10, width=400, height=280)
+
 
 #Labels
 lbAvanzar = Label(win, text="Avanzar (mm)", font=fuente2)
@@ -105,6 +109,11 @@ combo.place(x=75, y=255)
 
 combo["values"] = ["Drill", "Top Layer", "Bottom Layer"]
 combo.bind("<<ComboboxSelected>>", ComboSelect)
+
+#Canvas
+canv = Canvas(win, width=350, height=230,bg='white')
+canv.place(x=520,y=40)
+
 
 def dirXPos1():
     global numPasos
@@ -159,12 +168,14 @@ def SpindleOn():
         isSpindleOn=True
     
 def autoCalibrar():
+    messagebox.showinfo("Autocalibrar", "¡Coloque los electrodos, por favor!")
     while not GPIO.input(23):
         dirZNeg("0.04")
     #dirZNeg("0.1")
     ResetCeroZ()
     dirZPos("3.0")
-    print("Calibracion Finalizada!")
+    messagebox.showinfo("Finalizada", "¡Calibración finalizada, remueva el electrodo, por favor!")
+    #print("Calibracion Finalizada!")
 
 def CargarArchivo():
     listbox.delete(0, END)
@@ -177,10 +188,6 @@ def CargarArchivo():
             GCode = Archivo.read()
             Archivo.close()
             time.sleep(0.1)
-            # Archivo = open (NombreArchivo,'r')
-            # for line in Archivo:
-            #     listbox.insert(END, line)
-            # Archivo.close()
             btnEnviarArchivo['state'] = 'normal'
             lbProgress.config(text=str("Progreso: 0/" + str(len(GCode.splitlines())) + " | 0%"  ))
             if layer == 2:
@@ -195,6 +202,11 @@ def CargarArchivo():
                 GCode = Archivo.read()
                 Archivo.close()
                 time.sleep(0.1)
+            else:
+                Archivo = open (NombreArchivo,'r')
+                for line in Archivo:
+                    listbox.insert(END, line)
+                Archivo.close()
         except: 
             showerror("Open Source File", "Failed to read file")
         return
@@ -375,6 +387,38 @@ def fiducials():
         elif nFidu == 1:
             btnFiducial['state'] = 'disable'
 
+def graficar():
+    vecG01 = np.array([[]])
+    vecG00 = np.array([[]])
+    indG0 = np.array([[]])
+    vec0 = np.array([[]])
+    vec1 = np.array([[]])
+    (vecG01,vecG00, indG0)=getMatrizG01()
+    print(indG0)
+    print(vecG00)
+    par = 0
+    print("*********************************")
+    nG00=0
+    i=-1
+    for coor in vecG01:
+        i = i + 1
+        if indG0[nG00]-8-2*nG00-nG00 == i:
+            print(coor)
+            vec1=vecG00[nG00]
+            vec0=coor
+            line = canv.create_line(vec1[0]*10,vec1[1]*10,vec0[0]*10,vec0[1]*10,fill='blue')
+            nG00 = nG00 + 1
+            par=0
+        else:
+            if par==0: # si la linea es impar
+                vec1=coor   
+                par = par +1
+                line = canv.create_line(vec0[0]*10,vec0[1]*10,vec1[0]*10,vec1[1]*10,fill='blue')
+            else: 
+                vec0=coor
+                line = canv.create_line(vec1[0]*10,vec1[1]*10,vec0[0]*10,vec0[1]*10,fill='blue')
+                par=0
+                
 ## Botones ##
 
 # Eje X
@@ -437,6 +481,10 @@ btnCordenadaActual.place(x=200,y=620)
 #Fiducials
 btnFiducial = Button(win, text = 'Fidu. 1', font = fuente2, command = fiducials,height = 1, width = 8)
 btnFiducial.place(x=780,y=580)
+
+#Graficar
+btnGraficar = Button(win, text = 'Graficar', font = fuente2, command = graficar,height = 1, width = 15)
+btnGraficar.place(x=400,y=620)
 
 win.mainloop()
 

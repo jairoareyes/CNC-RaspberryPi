@@ -1,8 +1,21 @@
-from picamera import PiCamera, Color
+from Tkinter import *
+import tkFont
 
-PiCamera.start_preview(self)
-camera.annotate_background = Color('blue')
-camera.annotate_foreground = Color('yellow')
-camera.annotate_text = " Hello world "
-sleep(5)
-camera.stop_preview()
+root = Tk()
+
+fonts=list(tkFont.families())
+fonts.sort()
+
+display = Listbox(root)
+display.pack(fill=BOTH, expand=YES, side=LEFT)
+
+scroll = Scrollbar(root)
+scroll.pack(side=RIGHT, fill=Y, expand=NO)
+
+scroll.configure(command=display.yview)
+display.configure(yscrollcommand=scroll.set)
+
+for item in fonts:
+    display.insert(END, item)
+
+root.mainloop()

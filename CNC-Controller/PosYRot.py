@@ -8,6 +8,7 @@ matrizG01 = []
 matrizG00 = []
 GCode = ""
 GCode2 = []
+nG0=[]
 
 corFidu = np.array([[],[]])
 def rstZero():
@@ -89,15 +90,11 @@ def calculateRotation(angle):
     strRotatedG00 = []
     n=0
     m=0
-    corchete = 0
     theta = np.radians(angle) # Define el angulo de rotación
     # Calcula la matriz de rotación
     r = np.array(( (np.cos(theta), -np.sin(theta)), 
                     (np.sin(theta),  np.cos(theta)) ))
-    # print('***************************')
-    # print('rotation matrix:')
-    # print(r)
-    # print('***************************')
+
     for vec01 in matrizG01: # Rota cada coordenada G01
         vec01 = r.dot(vec01)
         subStrX = str(vec01[0:1])
@@ -147,15 +144,23 @@ def getGcodeRotated():
     global GCode2
     return GCode2
 
+def getMatrizG01():
+    global matrizG01
+    global matrizG00
+    global nG0
+    return (matrizG01,matrizG00,nG0)
+
 def getVectorCord(NombreArchivo, _gCode):
     global GCode
     GCode = _gCode
     v1 = np.array((0,0))
     v2 = np.array((0,0))
+    global matrizG01
+    global matrizG00
+    global nG0
+    nG0line = 0
     if NombreArchivo:
         try:
-            global matrizG01
-            global matrizG00
             Archivo = open (NombreArchivo,'r')
             for line in Archivo:
                 if 'G01 X' in line: # Convierte el string de las cordenadas a float
@@ -164,11 +169,18 @@ def getVectorCord(NombreArchivo, _gCode):
                 elif 'G00 X' in line: 
                     v2=(float(line[line.find("X")+1:line.find("Y"):]),float(line[line.find("Y")+1:]))
                     matrizG00.append(v2) # Añade cada vector a una matriz
+                    nG0.append(nG0line)
+                nG0line = nG0line + 1
             Archivo.close()
-            #print("Matriz G01")
-            #print(matrizG01)
-            print("Matriz G00")
-            print(matrizG00)
+            print("Encontrada Matriz G01")
+            print("Encontrada Matriz G00")
+
+            # f = open ('G00code.nc','w')
+            # for line2 in matrizG00:
+            #     f.write(str(line2))
+            #     f.write("\n")
+            # f.close()
+            
         except:
             showerror("Open Source File", "Failed to read file")
         return
