@@ -2,8 +2,9 @@ import numpy as np
 
 x = 0
 y = 0
-angle1 = 0
-angle2 = 0
+angle = 0
+# angle1 = 0
+# angle2 = 0
 matrizG01 = []
 matrizG00 = []
 GCode = ""
@@ -33,33 +34,34 @@ def getY():
     global y
     return y
 
-def saveFidu1(pos):
-    global x
-    global y
-    global corFidu
-    global angle1
-    if pos==0:
-        corFidu = ([[x,y]])    
-    else:
-        dx = 0
-        dy = 0
-        vec = np.array([[]])
-        vec = ([[x,y]])
-        corFidu=np.concatenate((corFidu, vec))
-        dx = corFidu[1,0]-corFidu[0,0]
-        dy = corFidu[1,1]-corFidu[0,1]
-        h = (dx**2+dy**2)**(1/2)
-        angle1 = np.arcsin((dy/h))
-        print("------- Angulo -------")
-        print(np.degrees(angle1))   
-    print(corFidu)
+# def saveFidu1(pos):
+#     global x
+#     global y
+#     global corFidu
+#     global angle1
+#     if pos==0:
+#         corFidu = ([[x,y]])    
+#     else:
+#         dx = 0
+#         dy = 0
+#         vec = np.array([[]])
+#         vec = ([[x,y]])
+#         corFidu=np.concatenate((corFidu, vec))
+#         dx = corFidu[1,0]-corFidu[0,0]
+#         dy = corFidu[1,1]-corFidu[0,1]
+#         h = (dx**2+dy**2)**(1/2)
+#         angle1 = np.arcsin((dy/h))
+#         print("------- Angulo -------")
+#         print(np.degrees(angle1))   
+#     print(corFidu)
 
 def saveFidu2(pos):
     global x
     global y
     global corFidu
-    global angle1
-    global angle2
+    global angle
+    # global angle1
+    # global angle2
     if pos==0:
         corFidu = ([[x,y]])    
     else:
@@ -71,12 +73,13 @@ def saveFidu2(pos):
         dx = corFidu[1,0]-corFidu[0,0]
         dy = corFidu[1,1]-corFidu[0,1]
         h = (dx**2+dy**2)**(1/2)
-        angle2 = np.arcsin((dy/h))
+        angle = np.arcsin((dy/h))
         print("------- Angulo -------")
-        print(np.degrees(angle2))   
-        print("------- Delta de angulos -------")
-        print(np.degrees(angle2-angle1))
-        calculateRotation(np.degrees(angle2-angle1))
+        print(np.degrees(angle))   
+        # print("------- Delta de angulos -------")
+        # print(np.degrees(angle2-angle1))
+        # calculateRotation(np.degrees(angle2-angle1))
+        calculateRotation(np.degrees(angle))
     print(corFidu)
 
 def calculateRotation(angle):
@@ -158,6 +161,9 @@ def getVectorCord(NombreArchivo, _gCode):
     global matrizG01
     global matrizG00
     global nG0
+    matrizG00 = []
+    matrizG01 = []
+    nG0 = []
     nG0line = 0
     if NombreArchivo:
         try:
@@ -171,16 +177,7 @@ def getVectorCord(NombreArchivo, _gCode):
                     matrizG00.append(v2) # Añade cada vector a una matriz
                     nG0.append(nG0line)
                 nG0line = nG0line + 1
-            Archivo.close()
-            print("Encontrada Matriz G01")
-            print("Encontrada Matriz G00")
-
-            # f = open ('G00code.nc','w')
-            # for line2 in matrizG00:
-            #     f.write(str(line2))
-            #     f.write("\n")
-            # f.close()
-            
+            Archivo.close()            
         except:
-            showerror("Open Source File", "Failed to read file")
+            showerror("Open Source File", "Failed to read file 2")
         return

@@ -97,11 +97,13 @@ sbAvMM.place(x=130, y=30,width=50)
 def ComboSelect(event):
     global layer
     global nFidu
-    nFidu=0
     layer = combo.current() 
     btnCargarArchivo['state'] = 'normal'
-    btnFiducial['state'] = 'normal'
-    btnFiducial['text'] = 'Fidu. 1'
+    if layer == 2:
+        nFidu=0
+        btnFiducial['state'] = 'normal'
+        btnFiducial['text'] = 'Fidu. 1'
+        btnActivarCamara ['state'] = 'normal'
 
 #ComboBox
 combo = ttk.Combobox(win)
@@ -149,9 +151,6 @@ def ResetCero():
 def ResetCeroZ():
     global nFidu
     resetZeroZ()
-    # nFidu=0
-    # btnFiducial['state'] = 'normal'
-    # btnFiducial['text'] = 'Fidu. 1'
 
 def HomeXY():
     homeXY()
@@ -171,11 +170,9 @@ def autoCalibrar():
     messagebox.showinfo("Autocalibrar", "¡Coloque los electrodos, por favor!")
     while not GPIO.input(23):
         dirZNeg("0.04")
-    #dirZNeg("0.1")
     ResetCeroZ()
     dirZPos("3.0")
     messagebox.showinfo("Finalizada", "¡Calibración finalizada, remueva el electrodo, por favor!")
-    #print("Calibracion Finalizada!")
 
 def CargarArchivo():
     listbox.delete(0, END)
@@ -190,8 +187,9 @@ def CargarArchivo():
             time.sleep(0.1)
             btnEnviarArchivo['state'] = 'normal'
             lbProgress.config(text=str("Progreso: 0/" + str(len(GCode.splitlines())) + " | 0%"  ))
+            getVectorCord(NombreArchivo, GCode) # Obtiene las coordenas de archivo en tipo float
+            graficar() # Grafica el GCode Cargado
             if layer == 2:
-                getVectorCord(NombreArchivo, GCode) # Obtiene las coordenas de archivo
                 GCode = getGcodeRotated()
                 Archivo = open ('GcodeRotado.nc','r')
                 for line in Archivo:
@@ -370,22 +368,23 @@ def cordActual():
 
 def fiducials():
     global nFidu
-    global layer
-    if layer == 0 or layer == 1:
-        saveFidu1(nFidu)
-        if nFidu == 0: 
-            btnFiducial['text'] = 'Fidu. 2'
-            nFidu = nFidu + 1
-        elif nFidu == 1:
-            btnFiducial['state'] = 'disable'
-    elif layer == 2:
-        print ("Bottom")
-        saveFidu2(nFidu)
-        if nFidu == 0: 
-            btnFiducial['text'] = 'Fidu. 2'
-            nFidu = nFidu + 1
-        elif nFidu == 1:
-            btnFiducial['state'] = 'disable'
+    #global layer
+    # if layer == 0 or layer == 1:
+    #     saveFidu1(nFidu)
+    #     if nFidu == 0: 
+    #         btnFiducial['text'] = 'Fidu. 2'
+    #         nFidu = nFidu + 1
+    #     elif nFidu == 1:
+    #         btnFiducial['state'] = 'disable'
+    # elif layer == 2:
+    saveFidu2(nFidu)
+    if nFidu == 0:
+        resetZero() 
+        btnFiducial['text'] = 'Fidu. 2'
+        nFidu = nFidu + 1
+    elif nFidu == 1:
+        nFidu = 0
+        btnFiducial['state'] = 'disable'
 
 def graficar():
     vecG01 = np.array([[]])
@@ -402,8 +401,8 @@ def graficar():
     i=-1
     for coor in vecG01:
         i = i + 1
-        if indG0[nG00]-8-2*nG00-nG00 == i:
-            print(coor)
+        if indG0[nG00]-8-2*nG00-nG00 == i: # Si es una linea siguiente a un G00
+            #print(coor)
             vec1=vecG00[nG00]
             vec0=coor
             line = canv.create_line(vec1[0]*10,vec1[1]*10,vec0[0]*10,vec0[1]*10,fill='blue')
@@ -463,7 +462,7 @@ btnDetenerEnvio = Button(win, text = 'Detener Envío', font = fuente2, command =
 btnDetenerEnvio.place(x=350,y=250)
 
 #Activar Camara
-btnActivarCamara = Button(win, text = 'Activar Camara', font = fuente2, command = CameraOn,height = 1, width = 15)
+btnActivarCamara = Button(win, text = 'Activar Camara', font = fuente2, command = CameraOn,height = 1, width = 15, state='disable')
 btnActivarCamara.place(x=630,y=580)
 
 #Activar Spindle
@@ -479,7 +478,7 @@ btnCordenadaActual = Button(win, text = 'Cord. Actual', font = fuente2, command 
 btnCordenadaActual.place(x=200,y=620)
 
 #Fiducials
-btnFiducial = Button(win, text = 'Fidu. 1', font = fuente2, command = fiducials,height = 1, width = 8)
+btnFiducial = Button(win, text = 'Fidu. 1', font = fuente2, command = fiducials,height = 1, width = 8, state='disable')
 btnFiducial.place(x=780,y=580)
 
 #Graficar
