@@ -34,6 +34,7 @@ GCode = StringVar(win)
 nFidu = IntVar(win)
 nFidu = 0
 layer = IntVar(win)
+profundidad = StringVar(win)
 
 isCameraOn = False
 isSendingGCode = False
@@ -57,7 +58,6 @@ lfCamara.place(x=500,y=300, width=400, height=320)
  #Grafica
 lfGrafica = LabelFrame(win, text="Gráfica",bd=4,font=fuente2)
 lfGrafica.place(x=500,y=10, width=400, height=280)
-
 
 #Labels
 lbAvanzar = Label(win, text="Avanzar (mm)", font=fuente2)
@@ -94,6 +94,9 @@ while varListbox<10:
 sbAvMM = Spinbox(win, from_=0.1, to=50,format='%.1f',increment=0.1 , textvariable=numPasos, font =fuente2)
 sbAvMM.place(x=130, y=30,width=50)
 
+sbProfundidad = Spinbox(win, from_=0, to=100,increment=20 , textvariable=profundidad, font =fuente2)
+sbProfundidad.place(x=280, y=250,width=50)
+
 def ComboSelect(event):
     global layer
     global nFidu
@@ -115,31 +118,58 @@ combo.bind("<<ComboboxSelected>>", ComboSelect)
 #Canvas
 canv = Canvas(win, width=350, height=230,bg='white')
 canv.place(x=520,y=40)
-
+canv.create_line(30,210,30,10,fill='black',width=3)
+canv.create_line(30,210,345,210,fill='black',width=3)
+canv.create_text(340,220,text='X')
+canv.create_text(15,15,text='Y')
 
 def dirXPos1():
     global numPasos
-    dirXPos(numPasos.get())
+    pasos = ''
+    pasos = numPasos.get()
+    if not '.' in pasos:
+        pasos=pasos+'.0'
+    dirXPos(pasos)
     
 def dirXNeg1():
     global numPasos
-    dirXNeg(numPasos.get())
+    pasos = ''
+    pasos = numPasos.get()
+    if not '.' in pasos:
+        pasos=pasos+'.0'
+    dirXNeg(pasos)
 
 def dirYPos1():
     global numPasos
-    dirYPos(numPasos.get())
+    pasos = ''
+    pasos = numPasos.get()
+    if not '.' in pasos:
+        pasos=pasos+'.0'
+    dirYPos(pasos)
 
 def dirYNeg1():
     global numPasos
-    dirYNeg(numPasos.get())
+    pasos = ''
+    pasos = numPasos.get()
+    if not '.' in pasos:
+        pasos=pasos+'.0'
+    dirYNeg(pasos)
 
 def dirZPos1():
     global numPasos
-    dirZPos(numPasos.get())
+    pasos = ''
+    pasos = numPasos.get()
+    if not '.' in pasos:
+        pasos=pasos+'.0'
+    dirZPos(pasos)
 
 def dirZNeg1():
     global numPasos
-    dirZNeg(numPasos.get())
+    pasos = ''
+    pasos = numPasos.get()
+    if not '.' in pasos:
+        pasos=pasos+'.0'
+    dirZNeg(pasos)
 
 def ResetCero():
     global nFidu
@@ -214,6 +244,7 @@ def sendingGCode():
     nLine = 0
     global isSendingGCode
     global isStopSending
+    global profundidad
     print("Enviar Archivo")
     linea=GCode.splitlines() #Convierte el String en Array
     btnCargarArchivo['state'] = 'disable'
@@ -227,10 +258,11 @@ def sendingGCode():
     btnDirZNeg['state'] = 'disable'
     btnDirZPos['state'] = 'disable'
     btnRstCero['state'] = 'disable'
+    btnHomeXY['state']='disable'
     btnDetenerEnvio['state'] = 'normal'
     while isSendingGCode:
         if not isStopSending:
-            enviarGCode(linea[nLine])
+            enviarGCode(linea[nLine],str(int(profundidad.get())/1000))
             nLine=nLine+1
             lbProgress.config(text=str("Progreso: " + str(nLine) + "/" + str(len(linea)) + " | " + str(int(nLine/len(linea)*100))+ "%"))
             if nLine==len(linea):
@@ -249,6 +281,7 @@ def sendingGCode():
                 btnDirZNeg['state'] = 'normal'
                 btnDirZPos['state'] = 'normal'
                 btnRstCero['state']='normal'
+                btnHomeXY['state']='normal'
                 btnEnviarArchivo['state']='disable'
                 btnEnviarArchivo['text'] = 'Enviar Archivo'
                 btnDetenerEnvio['state'] = 'disable'
@@ -278,11 +311,12 @@ def DetenerEnvio():
     isSendingGCode=False    
     isStopSending=True
     time.sleep(0.2)
-    dirZPos("3.0")
     spindleOff()
+    dirZPos("3.0")
     nLine=0
-    homeXY()
+    #time.sleep(8)
     messagebox.showinfo("Detenido", "¡Envío de código G detenido!")
+    homeXY()
     #btnCargarArchivo['state'] = 'normal'
     btnActivarCamara['state'] = 'normal'
     btnActivarSpindle['state'] = 'normal'
@@ -294,6 +328,7 @@ def DetenerEnvio():
     btnDirZNeg['state'] = 'normal'
     btnDirZPos['state'] = 'normal'
     btnRstCero['state']='normal'
+    btnHomeXY['state']='normal'
     btnEnviarArchivo['state']='normal'
     btnEnviarArchivo['text'] = 'Enviar Archivo'
     btnDetenerEnvio['state'] = 'disable'
@@ -387,14 +422,29 @@ def fiducials():
         btnFiducial['state'] = 'disable'
 
 def graficar():
+    global layer
     vecG01 = np.array([[]])
     vecG00 = np.array([[]])
     indG0 = np.array([[]])
     vec0 = np.array([[]])
     vec1 = np.array([[]])
+    maxCord = []
+    colorLinea = ''
+
+    if layer==0:
+        colorLinea='black'
+    elif layer==1:
+        colorLinea='red'
+    elif layer==2:
+        colorLinea='blue'
     (vecG01,vecG00, indG0)=getMatrizG01()
     print(indG0)
-    print(vecG00)
+    maxCord.append(np.amax(vecG00)) 
+    maxCord.append(np.amax(vecG01))
+    maxCordNum = np.amax(maxCord)
+    print (maxCordNum)
+    maxCordNum = 200/maxCordNum
+    print ("normalizado: "+str(maxCordNum))
     par = 0
     print("*********************************")
     nG00=0
@@ -402,20 +452,30 @@ def graficar():
     for coor in vecG01:
         i = i + 1
         if indG0[nG00]-8-2*nG00-nG00 == i: # Si es una linea siguiente a un G00
-            #print(coor)
             vec1=vecG00[nG00]
             vec0=coor
-            line = canv.create_line(vec1[0]*10,vec1[1]*10,vec0[0]*10,vec0[1]*10,fill='blue')
+            if layer == 1 or layer == 2:
+                canv.create_line(vec1[0]*maxCordNum+30,((vec1[1]*-1)+200/maxCordNum)*maxCordNum + 15,vec0[0]*maxCordNum+30,((vec0[1]*-1)+200/maxCordNum)*maxCordNum + 15,fill=colorLinea)
+                # print ("Vec1: "+ str(vec1[1]))
+                # print ("Vec normal: " + str(((vec1[1]*-1)+220/maxCordNum)))
+            elif layer == 0:
+                canv.create_oval(vec1[0]*maxCordNum,vec1[1]*maxCordNum,vec0[0]*maxCordNum,vec0[1]*maxCordNum,fill=colorLinea,width=3)
             nG00 = nG00 + 1
             par=0
         else:
             if par==0: # si la linea es impar
                 vec1=coor   
                 par = par +1
-                line = canv.create_line(vec0[0]*10,vec0[1]*10,vec1[0]*10,vec1[1]*10,fill='blue')
-            else: 
+                if layer == 1 or layer == 2:
+                    canv.create_line(vec0[0]*maxCordNum+30,((vec0[1]*-1)+200/maxCordNum)*maxCordNum + 15 ,vec1[0]*maxCordNum+30,((vec1[1]*-1)+200/maxCordNum)*maxCordNum + 15,fill=colorLinea)
+                elif layer == 0:
+                    canv.create_oval(vec0[0]*maxCordNum,vec0[1]*maxCordNum,vec1[0]*maxCordNum,vec1[1]*maxCordNum,fill=colorLinea,width=3)
+            else: # Si es par
                 vec0=coor
-                line = canv.create_line(vec1[0]*10,vec1[1]*10,vec0[0]*10,vec0[1]*10,fill='blue')
+                if layer == 1 or layer == 2:
+                     canv.create_line(vec1[0]*maxCordNum+30,((vec1[1]*-1)+200/maxCordNum)*maxCordNum + 15 ,vec0[0]*maxCordNum+30,((vec0[1]*-1)+200/maxCordNum)*maxCordNum + 15,fill=colorLinea)
+                elif layer == 0:
+                    canv.create_oval(vec1[0]*maxCordNum,vec1[1]*maxCordNum,vec0[0]*maxCordNum,vec0[1]*maxCordNum,fill=colorLinea,width=3)
                 par=0
                 
 ## Botones ##

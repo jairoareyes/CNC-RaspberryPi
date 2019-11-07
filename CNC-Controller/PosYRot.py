@@ -124,7 +124,7 @@ def calculateRotation(angle):
             subStrY = 'Y' + subStrY[1:subStrY.find("]")-0] # Convierte el valor cauculado a Str con n decimales
         else:
             subStrY = 'Y' + subStrY[1:subStrY.find(".")+5] # Convierte el valor cauculado a Str con 4 decimales
-        strRotatedG00.append('G01 '+subStrX + subStrY)
+        strRotatedG00.append('G00 '+subStrX + subStrY)
 
     lineas=GCode.splitlines() # Codifica el String
     for line in lineas: # Reemplaza las coordenadas rotadas en el GCode

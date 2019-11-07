@@ -12,27 +12,24 @@ ser = serial.Serial(
  )
 
 def dirXPos(valMM):
-	txt=b''
 	var='G21G91G00X'
 	var+=valMM
-	var+='1F200\r\n'
+	var+='F200\r\n'
 	ser.write(var.encode())
 	addX(float(valMM)*1)
 	time.sleep(0.2)
 	readSerial()
 
 def dirXNeg(valMM):
-	txt=b''
 	var='G21G91G00X-'
 	var+=valMM
-	var+='1F200\r\n'
+	var+='F200\r\n'
 	ser.write(var.encode())
 	addX(float(valMM)*-1)
 	time.sleep(0.2)
 	readSerial()
 
 def dirYPos(valMM):
-	txt=b''
 	var='G21G91G00Y'
 	var+=valMM
 	var+='1F200\r\n'
@@ -42,36 +39,32 @@ def dirYPos(valMM):
 	readSerial()
 
 def dirYNeg(valMM):
-	txt=b''
 	var='G21G91G00Y-'
 	var+=valMM
-	var+='1F200\r\n'
+	var+='F200\r\n'
 	ser.write(var.encode())
 	addY(float(valMM)*-1)
 	time.sleep(0.1)
 	readSerial()
 
 def dirZPos(valMM):
-	txt=b''
 	var='G21G91G1Z'
 	var+=valMM
-	var+='1F300\r\n'
+	var+='F300\r\n'
 	ser.write(var.encode())
 	time.sleep(0.2)
 	readSerial()
 
 def dirZNeg(valMM):
-	txt=b''
 	var='G21G91G1Z-'
 	var+=valMM
-	var+='1F300\r\n'
+	var+='F300\r\n'
 	ser.write(var.encode())
 	time.sleep(0.01)
 	readSerial()
 		
 def resetZero():
-	txt=b''
-	var='G92X0Y0Z0\r\n'
+	var='G92X0Y0F100\r\n'
 	ser.write(var.encode())
 	time.sleep(0.2)
 	rstZero() #reset cero en archivo pos
@@ -79,30 +72,38 @@ def resetZero():
 	readSerial()
 	
 def resetZeroZ():
-	txt=b''
 	var='G92Z0\r\n'
 	ser.write(var.encode())
 	time.sleep(0.2)
-	print("reset cero Z")
 	readSerial()
 
 def spindleOn():
-	txt=b''
 	var='M03\r\n'
 	ser.write(var.encode())
 
 def spindleOff():
-	txt=b''
 	var='M05\r\n'
 	ser.write(var.encode())
 	
 def homeXY():
-	txt=b''
-	var='G90X0Y0\r\n'
+	var='G90G01X0F250\r\n'
+	ser.write(var.encode())
+	time.sleep(0.1)
+	var='G90G01Y0F250\r\n'
 	ser.write(var.encode())
 
-def enviarGCode(valEnv):
+def enviarGCode(valEnv,profundidad):
+	if "G01 Z" in valEnv:
+		profActual = 0.0
+		profActual = float(valEnv[valEnv.find("Z")+1:])
+		profActual = profActual - float(profundidad)
+		valEnv="G01 Z" + str(profActual) #Adiciona el valor de profundidad
+		valEnv = valEnv[0:valEnv.find(".")+5] # Convierte el valor cauculado a Str con 4 decimales
+	elif "G00 X0Y0" in valEnv:
+		spindleOff()
+					
 	valEnv=valEnv.replace(" ","") #Quita espacios en blanco
+	valEnv=valEnv.replace("G00","G01") #Quita Expresiones G00
 	print('valor enviado: '+valEnv)
 	valEnv+='\r\n'
 	ser.write(valEnv.encode())
@@ -117,5 +118,4 @@ def readSerial():
 		if len(txt)>1:
 			print(txt)
 			recive = True
-		#print("No Recive!!!")
 		time.sleep(0.1)
