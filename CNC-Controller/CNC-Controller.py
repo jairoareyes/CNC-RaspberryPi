@@ -94,7 +94,7 @@ while varListbox<10:
 sbAvMM = Spinbox(win, from_=0.1, to=50,format='%.1f',increment=0.1 , textvariable=numPasos, font =fuente2)
 sbAvMM.place(x=130, y=30,width=50)
 
-sbProfundidad = Spinbox(win, from_=0, to=100,increment=20 , textvariable=profundidad, font =fuente2)
+sbProfundidad = Spinbox(win, from_=0, to=100,increment=40 , textvariable=profundidad, font =fuente2)
 sbProfundidad.place(x=280, y=250,width=50)
 
 def ComboSelect(event):
@@ -432,52 +432,57 @@ def graficar():
     colorLinea = ''
 
     if layer==0:
-        colorLinea='black'
+        colorLinea='green'
     elif layer==1:
         colorLinea='red'
     elif layer==2:
         colorLinea='blue'
     (vecG01,vecG00, indG0)=getMatrizG01()
-    print(indG0)
-    maxCord.append(np.amax(vecG00)) 
-    maxCord.append(np.amax(vecG01))
-    maxCordNum = np.amax(maxCord)
-    print (maxCordNum)
-    maxCordNum = 200/maxCordNum
+    if layer == 1 or layer == 2:
+        maxCord.append(np.amax(vecG00)) 
+        maxCord.append(np.amax(vecG01))
+        maxCordNum = np.amax(maxCord)
+        maxCordNum = 200/maxCordNum
+    else:
+        maxCord.append(np.amax(vecG00)) 
+        maxCordNum = np.amax(maxCord)
+        maxCordNum = 180/maxCordNum
     print ("normalizado: "+str(maxCordNum))
     par = 0
     print("*********************************")
     nG00=0
     i=-1
-    for coor in vecG01:
-        i = i + 1
-        if indG0[nG00]-8-2*nG00-nG00 == i: # Si es una linea siguiente a un G00
-            vec1=vecG00[nG00]
-            vec0=coor
-            if layer == 1 or layer == 2:
-                canv.create_line(vec1[0]*maxCordNum+30,((vec1[1]*-1)+200/maxCordNum)*maxCordNum + 15,vec0[0]*maxCordNum+30,((vec0[1]*-1)+200/maxCordNum)*maxCordNum + 15,fill=colorLinea)
-                # print ("Vec1: "+ str(vec1[1]))
-                # print ("Vec normal: " + str(((vec1[1]*-1)+220/maxCordNum)))
-            elif layer == 0:
-                canv.create_oval(vec1[0]*maxCordNum,vec1[1]*maxCordNum,vec0[0]*maxCordNum,vec0[1]*maxCordNum,fill=colorLinea,width=3)
-            nG00 = nG00 + 1
-            par=0
-        else:
-            if par==0: # si la linea es impar
-                vec1=coor   
-                par = par +1
-                if layer == 1 or layer == 2:
-                    canv.create_line(vec0[0]*maxCordNum+30,((vec0[1]*-1)+200/maxCordNum)*maxCordNum + 15 ,vec1[0]*maxCordNum+30,((vec1[1]*-1)+200/maxCordNum)*maxCordNum + 15,fill=colorLinea)
-                elif layer == 0:
-                    canv.create_oval(vec0[0]*maxCordNum,vec0[1]*maxCordNum,vec1[0]*maxCordNum,vec1[1]*maxCordNum,fill=colorLinea,width=3)
-            else: # Si es par
+    if layer == 1 or layer == 2:
+        for coor in vecG01:
+            i = i + 1
+            if indG0[nG00]-8-2*nG00-nG00 == i: # Si es una linea siguiente a un G00
+                vec1=vecG00[nG00]
                 vec0=coor
                 if layer == 1 or layer == 2:
-                     canv.create_line(vec1[0]*maxCordNum+30,((vec1[1]*-1)+200/maxCordNum)*maxCordNum + 15 ,vec0[0]*maxCordNum+30,((vec0[1]*-1)+200/maxCordNum)*maxCordNum + 15,fill=colorLinea)
-                elif layer == 0:
-                    canv.create_oval(vec1[0]*maxCordNum,vec1[1]*maxCordNum,vec0[0]*maxCordNum,vec0[1]*maxCordNum,fill=colorLinea,width=3)
+                    canv.create_line(vec1[0]*maxCordNum+30,((vec1[1]*-1)+200/maxCordNum)*maxCordNum + 15,vec0[0]*maxCordNum+30,((vec0[1]*-1)+200/maxCordNum)*maxCordNum + 15,fill=colorLinea)
+                nG00 = nG00 + 1
                 par=0
-                
+            else:
+                if par==0: # si la linea es impar
+                    vec1=coor   
+                    par = par +1
+                    if layer == 1 or layer == 2:
+                        canv.create_line(vec0[0]*maxCordNum+30,((vec0[1]*-1)+200/maxCordNum)*maxCordNum + 15 ,vec1[0]*maxCordNum+30,((vec1[1]*-1)+200/maxCordNum)*maxCordNum + 15,fill=colorLinea)
+                else: # Si es par
+                    vec0=coor
+                    if layer == 1 or layer == 2:
+                        canv.create_line(vec1[0]*maxCordNum+30,((vec1[1]*-1)+200/maxCordNum)*maxCordNum + 15 ,vec0[0]*maxCordNum+30,((vec0[1]*-1)+200/maxCordNum)*maxCordNum + 15,fill=colorLinea)
+                    par=0
+    else:
+        for coorActual in vecG00:
+            if coorActual[0] == 0.0:
+                continue
+            else:
+                print(coorActual[0])
+                canv.create_oval((coorActual[0])*maxCordNum + 30,((coorActual[1]*-1)+180/maxCordNum)*maxCordNum + 15,(coorActual[0])*maxCordNum+32,((coorActual[1]*-1)+180/maxCordNum)*maxCordNum+17,fill=colorLinea,width=3)
+
+
+
 ## Botones ##
 
 # Eje X
